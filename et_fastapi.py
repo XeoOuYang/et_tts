@@ -148,6 +148,9 @@ async def llm_async(kwargs: dict = None):
     inst_text = payload.pop('inst_text') if 'inst_text' in payload else ''
     # 指定调用llm模型
     spc_type = payload.pop('spc_type') if 'spc_type' in payload else 'llm_llama'
+    # 参数normalize
+    max_new_tokens = payload['max_new_tokens'] if 'max_new_tokens' in payload else 256
+    payload['max_new_tokens'] = max(max_new_tokens, 2*len(query))
     # 同步访问
     await _llm_lock_.acquire()
     try:
