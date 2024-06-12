@@ -141,5 +141,5 @@ if __name__ == '__main__':
         output_name = os.path.join(output_dir, f'tts_{text_idx}.wav')
         # if not os.path.exists(output_name):
         #     tts_result = tts(text_str, ref_speaker, output_name)
-        tts_result = tts_chat_tts(text_str, 414, output=output_name)
+        tts_result = tts_chat_tts(text_str, 8, output=output_name)
         print(tts_result)

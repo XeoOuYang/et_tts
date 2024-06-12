@@ -71,6 +71,11 @@ class ChatTTS(ET_TTS):
         self.cached_spk_emb = {}
 
     def sample_speaker(self, manual_seed):
+        from ChatTTS.spec_voices.load_voice import spec_voice
+        emb = spec_voice.get_by(manual_seed)
+        # 有预设，直接返回
+        if emb is not None: return emb
+        # 否则, 随机生成
         with SeedContext(manual_seed, True):
             return self.model.sample_random_speaker()
 
