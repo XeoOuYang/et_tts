@@ -6,6 +6,7 @@ ChatTTS/__pycache__/
 ChatTTS/infer/__pycache__/
 ChatTTS/model/__pycache__/
 ChatTTS/utils/__pycache__/
+ChatTTS/spec_voices/__pycache__/
 GPT_SoVITS/AR/__pycache__/
 GPT_SoVITS/AR/models/__pycache__/
 GPT_SoVITS/AR/modules/__pycache__/
