@@ -16,7 +16,7 @@ else:
 from et_base import ET_BASE
 
 
-class Enhance_Resemble(ET_BASE):
+class Wav_Enhance(ET_BASE):
     def __init__(self, nfe=32, solver='midpoint', lambd=0.5, tau=0.5):
         super().__init__()
         """
@@ -29,8 +29,8 @@ class Enhance_Resemble(ET_BASE):
         self.nfe = int(nfe)
         self.tau = tau
         self.lambd = lambd
-        from et_dirs import model_dir_base, resemble_enhance_base
-        base_name = os.path.basename(resemble_enhance_base)
+        from et_dirs import model_dir_base, wav_enhance_base
+        base_name = os.path.basename(wav_enhance_base)
         self.run_dir = os.path.join(model_dir_base, f'{base_name}{os.path.sep}model_repo')
 
     def resemble(self, path, **kwargs):
@@ -38,7 +38,7 @@ class Enhance_Resemble(ET_BASE):
 
     def denoise(self, path, **kwargs):
         if path is not None:
-            dwav, sr = torchaudio.load(str(path))
+            dwav, sr = torchaudio.load(path)
             dwav = dwav.mean(dim=0)
             # 降噪
             wav, new_sr = denoise(dwav, sr, device, run_dir=self.run_dir)
@@ -53,13 +53,13 @@ class Enhance_Resemble(ET_BASE):
         if 'output' in kwargs and (not os.path.exists(kwargs['output'])
                                    or not os.path.samefile(output_path, kwargs['output'])):
             shutil.copyfile(output_path, kwargs['output'])
-            os.remove(output_path)
+            # os.remove(output_path)
             output_path = kwargs['output']
         return output_path
 
     def enhance(self, path, **kwargs):
         if path is not None:
-            dwav, sr = torchaudio.load(str(path))
+            dwav, sr = torchaudio.load(path)
             dwav = dwav.mean(dim=0)
             # 增强
             wav, new_sr = enhance(dwav, sr, device, nfe=self.nfe, solver=self.solver, lambd=self.lambd, tau=self.tau,
@@ -75,6 +75,6 @@ class Enhance_Resemble(ET_BASE):
         if 'output' in kwargs and (not os.path.exists(kwargs['output'])
                                    or not os.path.samefile(output_path, kwargs['output'])):
             shutil.copyfile(output_path, kwargs['output'])
-            os.remove(output_path)
+            # os.remove(output_path)
             output_path = kwargs['output']
         return output_path

@@ -16,14 +16,16 @@ def tts_chat_tts(text: str, ref_speaker, **kwargs):
         TTS_INSTANCE['chat_tts'] = ChatTTS()
     tts = TTS_INSTANCE['chat_tts']
     ret_path = tts.tts(text=text, ref_speaker=f'{ref_speaker}', manual_seed=ref_speaker, **kwargs)
-    # resemble增强
+    # 增强
     from et_base import timer
-    with timer('resemble_enhance'):
-        base_dir = os.path.dirname(ret_path)
-        name, suffix = os.path.splitext(os.path.basename(ret_path))
-        output = os.path.join(base_dir, f'{name}_resemble{suffix}')
-        from Resemble_Enhance.enhance_resemble import Enhance_Resemble
-        ret_path = Enhance_Resemble().denoise(ret_path, output=output)
+    with timer('wav_denoise'):
+        # from Wav_Denoiser.wav_denoise import Wav_Denoise
+        # ret_path = Wav_Denoise().denoise(ret_path, **kwargs)
+        from Wav_Enhance.wav_enhance import Wav_Enhance
+        ret_path = Wav_Enhance().denoise(ret_path, **kwargs)
+    # with timer('wav_enhance'):
+    #     from Wav_Enhance.wav_enhance import Wav_Enhance
+    #     ret_path = Wav_Enhance().enhance(ret_path, **kwargs)
     return ret_path
 
 

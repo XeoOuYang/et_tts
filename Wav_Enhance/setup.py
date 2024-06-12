@@ -34,7 +34,7 @@ with open("requirements.txt", "r") as f:
     requirements = f.read().splitlines()
 
 setup(
-    name="Resemble_Enhance",
+    name="Wav_Enhance",
     python_requires=">=3.10",
     version=write_version("0.0.2", pre_release=True),
     description="Speech denoising and enhancement with deep learning",
@@ -47,7 +47,7 @@ setup(
     author_email="team@resemble.ai",
     entry_points={
         "console_scripts": [
-            "Resemble_Enhance=resemble_enhance.enhancer.__main__:main",
+            "Wav_Enhance=resemble_enhance.enhancer.__main__:main",
         ]
     },
 )

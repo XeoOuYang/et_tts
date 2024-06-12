@@ -16,13 +16,13 @@ Resemble Enhance is an AI-powered tool that aims to improve the overall quality 
 Install the stable version:
 
 ```bash
-pip install Resemble_Enhance --upgrade
+pip install Wav_Enhance --upgrade
 ```
 
 Or try the latest pre-release version:
 
 ```bash
-pip install Resemble_Enhance --upgrade --pre
+pip install Wav_Enhance --upgrade --pre
 ```
 
 ### Enhance
