@@ -75,3 +75,6 @@ pip install https://huggingface.co/r4ziel/xformers_pre_built/resolve/main/triton
 pip install num2words
 
 13、https://update.glados-config.com/clash/335545/e96a559/42774/glados.yaml
+
+14、deepspeed
+https://www.piwheels.org/project/deepspeed/

@@ -17,6 +17,8 @@ sovits_svc_base = os.path.join(prj_dir, 'SoVITS_SVC')
 suno_bark_base = os.path.join(prj_dir, 'Suno_Bark')
 # ChatTTS
 chattts_base = os.path.join(prj_dir, 'ChatTTS')
+# Resemble Enhance
+resemble_enhance_base = os.path.join(prj_dir, 'Resemble_Enhance')
 # outputs_v2
 outputs_v2 = os.path.join(prj_dir, 'outputs_v2')
 # resources

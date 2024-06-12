@@ -1,11 +1,10 @@
 import os
 import shutil
 
-from et_base import ET_BASE, yyyymmdd
-
-
-from OpenVoice_V2.openvoicev2_tts import OpenVoiceV2_TTS
 from ChatTTS.chattts_tts import ChatTTS
+from OpenVoice_V2.openvoicev2_tts import OpenVoiceV2_TTS
+from et_base import yyyymmdd
+
 TTS_INSTANCE = {
     'ov_v2': OpenVoiceV2_TTS(),
     'chat_tts': ChatTTS(),
@@ -16,7 +15,15 @@ def tts_chat_tts(text: str, ref_speaker, **kwargs):
     if 'chat_tts' not in TTS_INSTANCE:
         TTS_INSTANCE['chat_tts'] = ChatTTS()
     tts = TTS_INSTANCE['chat_tts']
-    ret_path = tts.tts(text=text, ref_speaker=f'ref_speaker', manual_seed=ref_speaker, **kwargs)
+    ret_path = tts.tts(text=text, ref_speaker=f'{ref_speaker}', manual_seed=ref_speaker, **kwargs)
+    # resemble增强
+    from et_base import timer
+    with timer('resemble_enhance'):
+        base_dir = os.path.dirname(ret_path)
+        name, suffix = os.path.splitext(os.path.basename(ret_path))
+        output = os.path.join(base_dir, f'{name}_resemble{suffix}')
+        from Resemble_Enhance.enhance_resemble import Enhance_Resemble
+        ret_path = Enhance_Resemble().denoise(ret_path, output=output)
     return ret_path
 
 
@@ -129,6 +136,7 @@ if __name__ == '__main__':
     # 开始转换
     for text_idx, text_str in enumerate(text_list):
         output_name = os.path.join(output_dir, f'tts_{text_idx}.wav')
-        if not os.path.exists(output_name):
-            tts_result = tts(text_str, ref_speaker, output_name)
-        print(output_name)
+        # if not os.path.exists(output_name):
+        #     tts_result = tts(text_str, ref_speaker, output_name)
+        tts_result = tts_chat_tts(text_str, 414, output=output_name)
+        print(tts_result)
