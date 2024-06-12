@@ -111,12 +111,87 @@ def replace_numeric(text):
     return text
 
 
+character_map = {
+    "：": "，",
+    "；": "，",
+    "！": "。",
+    "（": "，",
+    "）": "，",
+    "【": "，",
+    "】": "，",
+    "『": "，",
+    "』": "，",
+    "「": "，",
+    "」": "，",
+    "《": "，",
+    "》": "，",
+    "－": "，",
+    "‘": " ",
+    "“": " ",
+    "’": " ",
+    "”": " ",
+    '"': " ",
+    "'": " ",
+    ":": ",",
+    ";": ",",
+    "!": ".",
+    "(": ",",
+    ")": ",",
+    "[": ",",
+    "]": ",",
+    ">": ",",
+    "<": ",",
+    "-": ",",
+    "~": " ",
+    "～": " ",
+    "/": " ",
+}
+
+character_to_word = {
+    " & ": " and ",
+}
+
+
+def apply_character_to_word(text):
+    for k, v in character_to_word.items():
+        text = text.replace(k, v)
+    return text
+
+
+def apply_character_map(text):
+    translation_table = str.maketrans(character_map)
+    return text.translate(translation_table)
+
+
 def text_normalize(text):
     text = remove_punctuation(text)
     text = replace_dollar_sign(text)
     text = replace_percentage_sign(text)
     text = replace_numeric(text)
     return text
+
+
+def insert_spaces_between_uppercase(s):
+    # 使用正则表达式在每个相邻的大写字母之间插入空格
+    return re.sub(
+        r"(?<=[A-Z])(?=[A-Z])|(?<=[a-z])(?=[A-Z])|(?<=[\u4e00-\u9fa5])(?=[A-Z])|(?<=[A-Z])(?=[\u4e00-\u9fa5])",
+        " ",
+        s,
+    )
+
+
+def replace_unk_tokens(text, vocab):
+    """
+    把不在字典里的字符替换为 " , "
+    vocab = chat_tts.pretrain_models["tokenizer"].get_vocab()
+    """
+    vocab_set = set(vocab.keys())
+    # 添加所有英语字符
+    vocab_set.update(set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+    vocab_set.update(set(" \n\r\t"))
+    replaced_chars = [char if char in vocab_set else " , " for char in text]
+    output_text = "".join(replaced_chars)
+    return output_text
 
 
 def batch_split(items, batch_size=5):
