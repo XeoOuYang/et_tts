@@ -53,7 +53,7 @@ class Wav_Enhance(ET_BASE):
         if 'output' in kwargs and (not os.path.exists(kwargs['output'])
                                    or not os.path.samefile(output_path, kwargs['output'])):
             shutil.copyfile(output_path, kwargs['output'])
-            # os.remove(output_path)
+            os.remove(output_path)
             output_path = kwargs['output']
         return output_path
 
@@ -75,6 +75,6 @@ class Wav_Enhance(ET_BASE):
         if 'output' in kwargs and (not os.path.exists(kwargs['output'])
                                    or not os.path.samefile(output_path, kwargs['output'])):
             shutil.copyfile(output_path, kwargs['output'])
-            # os.remove(output_path)
+            os.remove(output_path)
             output_path = kwargs['output']
         return output_path
