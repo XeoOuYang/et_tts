@@ -16,13 +16,14 @@ def tts_chat_tts(text: str, ref_speaker, **kwargs):
         TTS_INSTANCE['chat_tts'] = ChatTTS()
     tts = TTS_INSTANCE['chat_tts']
     ret_path = tts.tts(text=text, ref_speaker=f'{ref_speaker}', manual_seed=ref_speaker, **kwargs)
-    # 增强
+    # 降噪
     from et_base import timer
     with timer('wav_denoise'):
         # from Wav_Denoiser.wav_denoise import Wav_Denoise
         # ret_path = Wav_Denoise().denoise(ret_path, **kwargs)
         from Wav_Enhance.wav_enhance import Wav_Enhance
         ret_path = Wav_Enhance().denoise(ret_path, **kwargs)
+    # 增强
     # with timer('wav_enhance'):
     #     from Wav_Enhance.wav_enhance import Wav_Enhance
     #     ret_path = Wav_Enhance().enhance(ret_path, **kwargs)

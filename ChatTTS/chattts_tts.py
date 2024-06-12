@@ -3,26 +3,54 @@ import os.path
 import random
 import re
 import shutil
+import numpy
 
 import torch
 torch._dynamo.config.cache_size_limit = 64
 torch._dynamo.config.suppress_errors = True
 torch.set_float32_matmul_precision('high')
-
-import numpy
-
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 from ChatTTS.core import Chat
 from et_base import ET_TTS
 
 
-def deterministic(seed=0):
-    torch.manual_seed(seed)
-    numpy.random.seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+class SeedContext:
+    @staticmethod
+    def deterministic(seed=0, cudnn_deterministic=False):
+        random.seed(seed)
+        numpy.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+            if cudnn_deterministic:
+                torch.backends.cudnn.deterministic = True
+                torch.backends.cudnn.benchmark = False
+
+    def __init__(self, seed: int, cudnn_deterministic=False):
+        self.seed = seed if seed >= 0 else random.randint(0, 2 ** 32 - 1)
+        self.cudnn_deterministic = cudnn_deterministic
+        self.state = None
+
+    def __enter__(self):
+        self.state = (
+            torch.get_rng_state(),
+            random.getstate(),
+            numpy.random.get_state(),
+            torch.backends.cudnn.deterministic,
+            torch.backends.cudnn.benchmark,
+        )
+        try:
+            SeedContext.deterministic(self.seed, cudnn_deterministic=self.cudnn_deterministic)
+        except Exception as e:
+            print(e)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        torch.set_rng_state(self.state[0])
+        random.setstate(self.state[1])
+        numpy.random.set_state(self.state[2])
+        torch.backends.cudnn.deterministic = self.state[3]
+        torch.backends.cudnn.benchmark = self.state[4]
 
 
 def clear_cuda_cache():
@@ -43,8 +71,8 @@ class ChatTTS(ET_TTS):
         self.cached_spk_emb = {}
 
     def sample_speaker(self, manual_seed):
-        deterministic(manual_seed)
-        return self.model.sample_random_speaker()
+        with SeedContext(manual_seed, True):
+            return self.model.sample_random_speaker()
 
     def tts(self, text: str, ref_speaker: str, **kwargs):
         # 固定音色
@@ -86,7 +114,6 @@ class ChatTTS(ET_TTS):
         # 并行推理
         wav_list = []
         from ChatTTS.tools import text_normalize, text_split, batch_split
-        from ChatTTS.tools import normalize_infer_text
 
         def post_infer_text(_old, _new):
             """
@@ -97,16 +124,18 @@ class ChatTTS(ET_TTS):
             print('input====>', _old)
             print('infer<====', _new, round(ratio, 2))
             # 判断ratio返回结果
+            from ChatTTS.tools import normalize_infer_text
             if ratio > 0.5:
                 return normalize_infer_text(_new)
             else:
                 return _old
-        for batch in batch_split(text_split(text_normalize(text))):
-            wav_arr = self.model.infer(batch, params_infer_code=params_infer_code, normalize_infer_text=post_infer_text,
-                                       params_refine_text=params_refine_text, skip_refine_text=skip_refine_text,
-                                       use_decoder=True)
-            wav_list.extend(wav_arr)
-            clear_cuda_cache()
+        with SeedContext(manual_seed, True):
+            for batch in batch_split(text_split(text_normalize(text))):
+                wav_arr = self.model.infer(batch, params_infer_code=params_infer_code,
+                                           normalize_infer_text=post_infer_text, params_refine_text=params_refine_text,
+                                           skip_refine_text=skip_refine_text, use_decoder=True)
+                wav_list.extend(wav_arr)
+                clear_cuda_cache()
         wav_path = f'{self.output_dir}{os.path.sep}tmp.wav'
         from ChatTTS.tools import combine_audio, save_audio
         audio = combine_audio(wav_list)
