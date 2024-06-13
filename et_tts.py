@@ -6,7 +6,7 @@ from OpenVoice_V2.openvoicev2_tts import OpenVoiceV2_TTS
 from et_base import yyyymmdd
 
 TTS_INSTANCE = {
-    'ov_v2': OpenVoiceV2_TTS(),
+    'ov_v2_English': OpenVoiceV2_TTS(),
     'chat_tts': ChatTTS(),
 }
 
@@ -35,9 +35,12 @@ def tts_chat_tts(text: str, ref_speaker, **kwargs):
 
 
 def tts_ov_v2(text: str, ref_speaker: str, **kwargs):
-    if 'ov_v2' not in TTS_INSTANCE:
-        TTS_INSTANCE['ov_v2'] = OpenVoiceV2_TTS()
-    tts = TTS_INSTANCE['ov_v2']
+    language = 'english' if 'language' not in kwargs else kwargs['language']
+    language = language.lower().capitalize()
+    inst_key = f'ov_v2_{language}'
+    if inst_key not in TTS_INSTANCE:
+        TTS_INSTANCE[inst_key] = OpenVoiceV2_TTS(lang=language)
+    tts = TTS_INSTANCE[inst_key]
     ret_path = tts.tts(text=text, ref_speaker=ref_speaker, **kwargs)
     return ret_path
 
