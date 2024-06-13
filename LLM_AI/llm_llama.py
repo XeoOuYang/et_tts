@@ -106,6 +106,7 @@ def build_prompt(tokenizer, template, query, history, system=None):
     # history.append({"role": 'user', 'message': query})
     qa_text = user_format.format(content=query, stop_token=tokenizer.eos_token)
     tokens = tokenizer.encode(qa_text, add_special_tokens=True)
+    qa_ids_tokens = len(tokens)
     input_ids += tokens
     # history.append({"role": 'assistant', 'message': ''})
     complete_text = assistant_complete.format(content='', stop_token=tokenizer.eos_token)
@@ -113,7 +114,7 @@ def build_prompt(tokenizer, template, query, history, system=None):
     input_ids += tokens
     # 返回encode的ids
     input_ids = torch.tensor([input_ids], dtype=torch.long).to(device)
-    return input_ids
+    return input_ids, qa_ids_tokens
 
 
 from transformers.generation.stopping_criteria import StoppingCriteria, StoppingCriteriaList
@@ -257,10 +258,19 @@ class LLM_Llama_V3(ET_LLM):
         if kwargs:  # 只接受配置参数
             for k, v in infer_params.items():
                 if k in kwargs: infer_params[k] = kwargs[k]
+        self.tokenizer.encode(query, add_special_tokens=True)
         # 最大句子数限制
         max_num_sentence = 3 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
         # prompt编码
-        input_ids = build_prompt(self.tokenizer, self.template, query=query, history=history, system=system)
+        input_ids, qa_ids_tokens = build_prompt(self.tokenizer, self.template, query=query,
+                                                system=system, history=history)
+        # 调整max_new_tokens/min_new_tokens参数
+        max_new_tokens = 256 if 'max_new_tokens' not in kwargs else kwargs['max_new_tokens']
+        max_new_tokens = max(max_new_tokens, qa_ids_tokens)
+        min_new_tokens = max_new_tokens//2 if 'min_new_tokens' not in kwargs else kwargs['min_new_tokens']
+        min_new_tokens = max(min_new_tokens, qa_ids_tokens//2)
+        infer_params['max_new_tokens'] = max_new_tokens
+        infer_params['min_new_tokens'] = min_new_tokens
         sentence_stopping_criteria = SentenceStoppingCriteria(max_num_sentence=max_num_sentence,
                                                               sentence_token_id_list=self.sentence_token_id_list,
                                                               dot_token_id=self.sentence_token_id_list[1],

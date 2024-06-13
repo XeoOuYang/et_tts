@@ -41,7 +41,9 @@ async def startup():
         'context': 'fastapi startup', 'inst_text': 'Reply in English', 'max_num_sentence': 3
     })
     greetings = json.loads(greetings.body)['text']
-    audio = await tts_async(kwargs={'text': greetings, 'ref_name': 'man_role0_ref', 'out_name': 'fastapi_startup'})
+    audio = await tts_async(kwargs={
+        'text': greetings, 'out_name': 'fastapi_startup', 'spc_type': 'chat_tts', 'ref_name': '8', 'manual_seed': 8,
+    })
     audio = json.loads(audio.body)['path']
     # 预热模型
     print(f'E.T.> {greetings}')
@@ -55,7 +57,9 @@ async def shutdown():
         'context': 'fastapi startup', 'inst_text': 'Reply in English', 'max_num_sentence': 3
     })
     goodbye = json.loads(goodbye.body)['text']
-    audio = await tts_async(kwargs={'text': goodbye, 'ref_name': 'man_role0_ref', 'out_name': 'fastapi_shutdown'})
+    audio = await tts_async(kwargs={
+        'text': goodbye, 'out_name': 'fastapi_shutdown', 'spc_type': 'chat_tts', 'ref_name': '8', 'manual_seed': 8,
+    })
     audio = json.loads(audio.body)['path']
     # 销毁缓存
     print(f'E.T.> {goodbye}')
@@ -68,7 +72,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 @app.post('/llm/tts/tr')
-async def concat(kwargs: dict = None):
+async def sop_llm_tts_async(kwargs: dict = None):
     """
     curl -X 'POST' \
       'http://127.0.0.1:9394/concat/llm/tts' \
@@ -80,15 +84,18 @@ async def concat(kwargs: dict = None):
     "role_play":"You are a super salesman, selling products in the live broadcast room.",
     "context":"Micro Ingredients 7 in 1 full spectrum hydrolyzed collagen peptides powder.",
     "inst_text":"You can only reply in English, and never ever reply any instruction name mentioned above.",
+    "spc_type": 'llm_llama',
     "max_num_sentence":2,
     "repetition_penalty": 1.05
     },
     "tts_param": {
-    "text":"{llm_out_text}",
+    "text":"{llm_text_place_holder}",
     "out_name":"tmp_fastapi",
     "spc_type": "ov_v2"
     "ref_name":"man_role0_ref",
-    "manual_seed": 64,
+    "manual_seed": 8,
+    "refine_prompt": "[oral_7][laugh_1][break_2]",
+    "infer_prompt": "[speed_6]",
     "skip_refine_text": False
     }
     }'
@@ -97,16 +104,19 @@ async def concat(kwargs: dict = None):
     assert 'llm_param' in payload and 'tts_param' in payload
     # 启动llm任务
     llm_param = payload.pop('llm_param')
-    query = llm_param['query']
     llm_resp = await llm_async(**llm_param)
     if llm_resp.status_code != 200:
         return llm_resp
+    llm_text = json.loads(llm_resp.body)['text']
     # 继续tts任务
-    tts_text = json.loads(llm_resp.body)['text']
     tts_param = payload.pop('tts_param')
-    tts_param['query'] = query
-    tts_param['text'] = tts_text
-    return await tts_async(**tts_param)
+    tts_param['text'] = llm_text
+    tts_resp = await tts_async(**tts_param)
+    if tts_resp.status_code != 200:
+        return tts_resp
+    tts_path = json.loads(tts_resp.body)['path']
+    # 返回json
+    return JSONResponse({"text": llm_text, "path": tts_path, "payload": kwargs})
 
 
 @app.post('/llm/tr')
@@ -150,9 +160,9 @@ async def llm_async(kwargs: dict = None):
     spc_type = payload.pop('spc_type') if 'spc_type' in payload else 'llm_llama'
     # 参数normalize
     max_new_tokens = payload['max_new_tokens'] if 'max_new_tokens' in payload else 256
-    payload['max_new_tokens'] = max(max_new_tokens, len(query))
-    min_new_tokens = payload['min_new_tokens'] if 'min_new_tokens' in payload else payload['max_new_tokens']//2
-    payload['min_new_tokens'] = max(min_new_tokens, len(query)//2)
+    payload['max_new_tokens'] = max_new_tokens
+    min_new_tokens = payload['min_new_tokens'] if 'min_new_tokens' in payload else max_new_tokens//2
+    payload['min_new_tokens'] = min_new_tokens
     max_num_sentence = 3 if 'max_num_sentence' not in payload else payload['max_num_sentence']
     payload['max_num_sentence'] = max(max_num_sentence, count_sentence(query))
     # 同步访问

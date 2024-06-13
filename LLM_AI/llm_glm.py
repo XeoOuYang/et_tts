@@ -177,6 +177,16 @@ class LLM_GLM_4(ET_LLM):
         input_ids = self.tokenizer.apply_chat_template(history, add_generation_prompt=True, tokenize=True,
                                                        return_tensors="pt", return_dict=True)
         input_ids = input_ids.to(device)
+        # 调整max_new_tokens/min_new_tokens参数
+        qa_ids = self.tokenizer.apply_chat_template([], add_generation_prompt=True, tokenize=True,
+                                                    return_tensors="pt", return_dict=True)
+        qa_ids_tokens = qa_ids['input_ids'].shape[1]
+        max_new_tokens = 256 if 'max_new_tokens' not in kwargs else kwargs['max_new_tokens']
+        max_new_tokens = max(max_new_tokens, qa_ids_tokens)
+        min_new_tokens = max_new_tokens // 2 if 'min_new_tokens' not in kwargs else kwargs['min_new_tokens']
+        min_new_tokens = max(min_new_tokens, qa_ids_tokens // 2)
+        infer_params['max_new_tokens'] = max_new_tokens
+        infer_params['min_new_tokens'] = min_new_tokens
         sentence_stopping_criteria = SentenceStoppingCriteria(max_num_sentence=max_num_sentence,
                                                               sentence_token_id_list=self.sentence_token_id_list,
                                                               dot_token_id=self.sentence_token_id_list[1],
