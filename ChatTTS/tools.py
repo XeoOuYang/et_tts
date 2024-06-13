@@ -7,7 +7,7 @@ from num2words import num2words
 
 def text_split(text) -> list[str]:
     text = text.strip("\n")
-    punctuation_mark = r'[.?!。？！]'
+    punctuation_mark = r'[.?!:。？！：]'
     item_list = re.split(f'({punctuation_mark})', text)
     merge_item = [''.join(group) for group in zip(item_list[::2], item_list[1::2])]
     if len(item_list) % 2 == 1:
@@ -175,9 +175,7 @@ def insert_spaces_between_uppercase(s):
     # 使用正则表达式在每个相邻的大写字母之间插入空格
     return re.sub(
         r"(?<=[A-Z])(?=[A-Z])|(?<=[a-z])(?=[A-Z])|(?<=[\u4e00-\u9fa5])(?=[A-Z])|(?<=[A-Z])(?=[\u4e00-\u9fa5])",
-        " ",
-        s,
-    )
+        " ", s, )
 
 
 def replace_unk_tokens(text, vocab):

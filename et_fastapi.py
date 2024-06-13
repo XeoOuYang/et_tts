@@ -11,7 +11,7 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from et_base import timer, yyyymmdd
-from et_llm import llm_llama_v3, llm_glm_4
+from et_llm import llm_llama_v3, llm_glm_4, count_sentence
 from et_tts import tts_ov_v2, tts_chat_tts
 from et_dirs import resources, outputs_v2
 from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_NAME
@@ -151,6 +151,10 @@ async def llm_async(kwargs: dict = None):
     # 参数normalize
     max_new_tokens = payload['max_new_tokens'] if 'max_new_tokens' in payload else 256
     payload['max_new_tokens'] = max(max_new_tokens, len(query))
+    min_new_tokens = payload['min_new_tokens'] if 'min_new_tokens' in payload else payload['max_new_tokens']//2
+    payload['min_new_tokens'] = max(min_new_tokens, len(query)//2)
+    max_num_sentence = 3 if 'max_num_sentence' not in payload else payload['max_num_sentence']
+    payload['max_num_sentence'] = max(max_num_sentence, count_sentence(query))
     # 同步访问
     await _llm_lock_.acquire()
     try:

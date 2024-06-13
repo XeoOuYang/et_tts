@@ -4,6 +4,7 @@ from LLM_AI.llm_llama import LLM_Llama_V3
 from LLM_AI.llm_glm import LLM_GLM_4
 
 LLM_INSTANCE = {
+    # 'llama_v3': LLM_Llama_V3(),
     'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V9'),
     'glm_4': LLM_GLM_4()
 }
@@ -18,15 +19,22 @@ def unload_model(model: str):
     LLM_INSTANCE[model].unload_model()
 
 
+def count_sentence(text):
+    pattern = r'[．?!:。？！：]|\.'
+    matches = re.findall(pattern, text)
+    count = len(matches)
+    return count
+
+
 def llm_glm_4(query, role_play, context, inst_text, **kwargs):
     if is_load('llama_v3'):
         unload_model('llama_v3')
     # 加载新模型
     llm = LLM_INSTANCE['glm_4']
     system_text = f'{role_play}\n\n{context}\n\n{inst_text}'
-    an = llm.llm(query=query, system=system_text, enable_history=True, **kwargs)
-    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
+    an = llm.llm(query=query, system=system_text, **kwargs)
     # 对内容格式化
+    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
     return _post_llm_(an, max_num_sentence)
 
 
@@ -36,9 +44,9 @@ def llm_llama_v3(query, role_play, context, inst_text, **kwargs):
     # 加载新模型
     llm = LLM_INSTANCE['llama_v3']
     system_text = f'{role_play}\n\n{context}\n\n{inst_text}'
-    an = llm.llm(query=query, system=system_text, enable_history=True, **kwargs)
-    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
+    an = llm.llm(query=query, system=system_text, **kwargs)
     # 对内容格式化
+    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
     return _post_llm_(an, max_num_sentence)
 
 
@@ -52,8 +60,8 @@ def llm(query, role_play, context, inst_text, **kwargs):
     """
     # an = llm_llama_v3(query, role_play, context, inst_text, **kwargs)
     an = llm_glm_4(query, role_play, context, inst_text, **kwargs)
-    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
     # 对内容格式化
+    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
     return _post_llm_(an, max_num_sentence)
 
 
@@ -87,3 +95,6 @@ if __name__ == '__main__':
         an = llm_glm_4(query, role_play='You are a super seller. You are selling products in air now. ',
                           context=context, inst_text='You can only rely in English.')
     print(an)
+    # todo: 禁止罗马数字
+    # todo: 只允许英文/汉字
+    # todo: 静止非法字符
