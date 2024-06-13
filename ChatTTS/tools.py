@@ -5,7 +5,7 @@ import wave
 from num2words import num2words
 
 
-def text_split(text) -> list[str]:
+def text_split(text, language) -> list[str]:
     text = text.strip("\n")
     punctuation_mark = r'[.?!:。？！：]'
     item_list = re.split(f'({punctuation_mark})', text)
@@ -14,7 +14,8 @@ def text_split(text) -> list[str]:
         merge_item.append(item_list[-1])
     # 长度对齐，并行加速
     # print('merge_item=>', merge_item)
-    merge_item = length_align([i.lower().strip() for i in merge_item], expt_length=120, split=True)
+    expt_length = 80 if language == 'english' else 40
+    merge_item = length_align([i.lower().strip() for i in merge_item], expt_length=expt_length, split=True)
     # print('merge_item=>', merge_item)
     return merge_item
 
@@ -59,7 +60,7 @@ def sentence_split(text, expt_length) -> list[str]:
 
 
 def remove_punctuation(text):
-    punctuation_pattern = r"[：；（）【】『』「」《》－‘“’”:;\(\)\[\]><\-\"]"
+    punctuation_pattern = r"[；（）【】『』「」《》－‘“’”;\(\)\[\]><\-\"]"
     text = re.sub(punctuation_pattern, ' ', text)
     # 使用正则表达式将多个连续的句号替换为一个句号
     text = re.sub(r'。{2,}', '。', text)
@@ -76,6 +77,9 @@ def normalize_infer_text(text, lang='english'):
         text = re.sub(r']\w+\b', '] ', text)
         text = re.sub(r']\s+(tan|io|so|p)\b', '] ', text)
         text = re.sub(r']\s+like\s*(p|io)?\b', '] ', text)
+    elif lang == 'chinese':
+        text = re.sub(r'（.*?）', '', text)
+        # text = re.sub(r'\b[\u4e00-\u9fa5]*[a-zA-Z]+[\u4e00-\u9fa5]*\b', '', text)
     # 连续空格
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()

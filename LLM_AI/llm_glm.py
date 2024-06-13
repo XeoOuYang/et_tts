@@ -144,7 +144,7 @@ class LLM_GLM_4(ET_LLM):
         }
         self.sentence_token_list = ['!', '！', '.', '。', '?', '？', ':', '：']
         # print(self.sentence_token_id_list)
-        self.history_cached = []
+        self.history_cached: dict[str, list] = {}
 
     def unload_model(self):
         if self.model:

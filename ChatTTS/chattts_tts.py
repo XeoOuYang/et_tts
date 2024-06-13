@@ -129,7 +129,10 @@ class ChatTTS(ET_TTS):
             处理推理结果
             """
             import difflib
-            ratio = difflib.SequenceMatcher(None, _old, re.sub(r'\[.*?\]', '', _new)).ratio()
+            re_new = re.sub(r'\[.*?\]', '', _new)
+            if language == 'chinese':
+                re_new = re.sub(r'\s+', '', re_new)
+            ratio = difflib.SequenceMatcher(None, _old, re_new).ratio()
             print('input====>', _old)
             print('infer<====', _new, round(ratio, 2))
             # 判断ratio返回结果
@@ -139,7 +142,7 @@ class ChatTTS(ET_TTS):
             else:
                 return _old
         with SeedContext(manual_seed, True):
-            for batch in batch_split(text_split(text_normalize(text, True))):
+            for batch in batch_split(text_split(text_normalize(text, True), language)):
                 wav_arr = self.model.infer(batch, params_infer_code=params_infer_code,
                                            normalize_infer_text=post_infer_text, params_refine_text=params_refine_text,
                                            skip_refine_text=skip_refine_text, use_decoder=True)
@@ -167,7 +170,7 @@ class ChatTTS(ET_TTS):
 
 def run_random_seed(text, start=0, end=10000, bias=0):
     # 读取缓存
-    tts = ChatTTS(manual_seed=2000, refine_text=False)
+    tts = ChatTTS(manual_seed=2000, refine_text=True)
     seed_base = os.path.join(outputs_v2, f'seed')
     if not os.path.exists(seed_base):
         os.makedirs(seed_base)
@@ -182,13 +185,13 @@ def run_random_seed(text, start=0, end=10000, bias=0):
     seed_dict = load_seed_set(seed_set_file)
     # 随机测试
     for idx in range(end):
-        manual_seed = random.randint(start, end) + bias
+        manual_seed = random.randint(0, 100000) + bias
         if manual_seed not in seed_dict:
             prompt = f'[oral_2][laugh_0][break_4]'
             out_path = os.path.join(seed_base, f'chattts_{manual_seed}_{idx}.wav')
             with timer('chat_tts'):
                 out_path = tts.tts(text=text, ref_speaker=f'{manual_seed}', output=out_path,
-                                   refine_prompt=prompt, manual_seed=manual_seed)
+                                   refine_prompt=prompt, manual_seed=manual_seed, language='chinese')
             seed_dict[manual_seed] = out_path
         print(seed_dict[manual_seed])
     # 保存结果
@@ -202,8 +205,8 @@ if __name__ == '__main__':
     #         'maintaining your nail health, keeping wrinkles at bay, or reducing sore muscles after exercise.'
     #         'It covers everything!'
     #         'Not just limited to one specific part of ourselves but truly taking care of us as individuals.')
-    text = ('So, it’s a whole spectrum of collage, covering all bases, for your hair loss prevention,'
-            'maintaining your nail health, keeping wrinkles at bay, or reducing sore muscles after exercise.')
+    # text = ('So, it’s a whole spectrum of collage, covering all bases, for your hair loss prevention,'
+    #         'maintaining your nail health, keeping wrinkles at bay, or reducing sore muscles after exercise.')
     # text_list = [
     #     "Hello, gorgeous! Welcome to Natural Power! I'm so excited to be here with all of you tonight to talk about one of my absolute favorite topics: the power of natural ingredients to transform your beauty routine! I'm sipping on my daily dose of beauty right now, and let me tell you, this collagen elixir is my secret weapon for glowing skin, strong hair, and nails that wow! Today, we're diving deep into the world of collagen and unlocking the secrets to youthful, radiant beauty. And guess what? I've got an incredible deal for you today that you won't want to miss! Before we get started, drop a comment below and let me know where you're tuning in from! I'm curious to see how far and wide the Natural Power community reaches. Now, let's get this natural beauty party started!",
     #     "Ladies, are you ready to turn back the clock and unlock your youthful glow? I'm thrilled to introduce you to the Micro Ingredients 7-in-1 Full Spectrum Hydrolyzed Collagen Peptides Powder, your ultimate secret weapon for radiant skin, lustrous hair, strong nails, and supple joints! Are you feeling the effects of aging? Don't worry, darling! This collagen powder is here to rescue you from sagging skin, dull hair, brittle nails, and creaky joints. It's like a magic potion that nourishes your body from within, leaving you feeling and looking years younger! Okay, lovelies, let's talk about what makes this collagen powder an absolute game-changer. Trust me, it's not your average supplement! First of all, it's like a supercharged beauty smoothie for your body. We're talking a 7-in-1 full spectrum blend that delivers all the essential types of collagen your body craves. This means complete nourishment for your skin, hair, nails, joints – the whole package! And forget about those chunky, hard-to-digest collagen powders. This one is hydrolyzed, which means it's broken down into tiny particles for super-easy absorption. You'll get maximum benefits from every single scoop! Plus, it's made with all-natural goodness. No weird chemicals or artificial junk here. Just pure, clean collagen sourced from things like grass-fed cows, chickens, and even marine sources. It's like a little taste of nature for your body! Now, I know some of you might be thinking, ""But does it taste weird?"" Not at all! It's completely flavorless, so you can mix it into your morning coffee, your favorite smoothie, or even your water without changing the taste one bit. Oh, and did I mention it's packed with other beauty-boosting ingredients? We're talking hyaluronic acid for hydration, vitamin C for radiance, and biotin for strong hair and nails. It's like a multivitamin for your beauty routine!",
@@ -219,6 +222,11 @@ if __name__ == '__main__':
     # oral: 插入词(oral)强度，越大越多口头禅
     # laugh: 笑声(laugh)强度，越大越多笑点
     # break: 停顿(break)强度，越大越多停顿
+    text = ('哥哥，你给我买这个棒棒糖，你女朋友不会生气吧？'
+            '哎，真好吃，哥，你尝一口。'
+            '哥哥，咱俩吃同一个棒棒糖，你女朋友知道了，不会吃醋吧？'
+            '哥哥，你骑着小电动车带着我，你女朋友知道了不会揍我吧？'
+            '你女朋友好可怕，不像我，只会心疼giegie。')
     run_random_seed(text, 0, 1000, bias=0)
     # 本地测试
     # tts = ChatTTS(manual_seed=2000)

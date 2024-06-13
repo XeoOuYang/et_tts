@@ -130,8 +130,8 @@ class Chat:
     ):
         
         assert self.check_model(use_decoder=use_decoder)
-        old_text = text
         if not skip_refine_text:
+            old_text = text
             text_tokens = refine_text(self.pretrain_models, text, **params_refine_text)['ids']
             text_tokens = [i[i < self.pretrain_models['tokenizer'].convert_tokens_to_ids('[break_0]')] for i in text_tokens]
             text = self.pretrain_models['tokenizer'].batch_decode(text_tokens)
@@ -143,7 +143,7 @@ class Chat:
             if isinstance(text, str):
                 text = [text]
             if normalize_infer_text:
-                text = [normalize_infer_text(_old, _new) for _old, _new in zip(old_text, text)]
+                text = [normalize_infer_text(_old, _old) for _old in text]
             if refine_text_only:
                 return text
 
