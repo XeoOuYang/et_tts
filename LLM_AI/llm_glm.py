@@ -212,9 +212,11 @@ class LLM_GLM_4(ET_LLM):
         # 当不存在<|endoftext|> <|user|> <|observation|>时，就是主动停止推理，否则就是达到max_tokens停止推理
         idx = an.rfind('<|endoftext|>')
         if idx > 0: an = an[:idx]
+        an = an.replace('\n', '').strip()
+        an = an.replace('<|user|>', '').strip()
         # 历史记录
-        history[-1] = {"role": 'user', 'message': query}
-        history.append({"role": 'assistant', 'message': an})
+        history[-1] = {"role": 'user', 'content': query}
+        history.append({"role": 'assistant', 'content': an})
         if uuid_key is not None: self.history_cached[uuid_key] = history[1:]
         # 返回结果
         print("infer<=", an)

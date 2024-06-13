@@ -93,7 +93,7 @@ async def sop_llm_tts_async(query, role_play, context, inst_text, max_num_senten
             "role_play": role_play,
             "context": context,
             "inst_text": inst_text,
-            "spc_type": 'llm_llama',
+            "spc_type": 'llm_glm',
             "max_num_sentence": max_num_sentence,
         },
         "tts_param": {
