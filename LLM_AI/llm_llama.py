@@ -1,3 +1,4 @@
+import json
 import os.path
 import re
 
@@ -183,6 +184,21 @@ class SentenceStoppingCriteria(StoppingCriteria):
         return False
 
 
+from transformers.generation.logits_process import LogitsProcessor, LogitsProcessorList
+
+class BadWordsLogitsProcessor(LogitsProcessor):
+    def __init__(self, bad_words: list[str], tokenizer):
+        super().__init__()
+        self._model_tokenizer = tokenizer
+        self._bad_word_token_id_list = [self._model_tokenizer.encode(_word, add_special_tokens=False)[-1] for _word in bad_words]
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        last_word = self._model_tokenizer.decode(input_ids[0][-1])
+        if 'type' in last_word.lower():
+            for token in self._bad_word_token_id_list: scores[:, token] = -float('inf')
+        return scores
+
+
 class LLM_Llama_V3(ET_LLM):
     def __init__(self, model_name: str = 'LLM-Research/Meta-Llama-3-8B-Instruct', temp_name: str = 'llama3'):
         super().__init__()
@@ -200,7 +216,8 @@ class LLM_Llama_V3(ET_LLM):
         self.sentence_token_list = None
         self.history_cached = None
         # # bad_words_ids
-        # self.bad_words_ids = None
+        self.bad_words = None
+        self.logits_processor = None
 
     def lazy_load(self):
         self.model = load_model(self.model_path).eval()
@@ -230,12 +247,12 @@ class LLM_Llama_V3(ET_LLM):
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
         # # bad_words_ids
-        # bad_words_ids = []
-        # for word in ["<|start_header_id|>", "<|end_header_id|>", "system", "user", "assistant"]:
-        #     bad_words_ids.append(self.tokenizer([word], add_special_tokens=False).input_ids[0])
-        # self.bad_words_ids = bad_words_ids
-        # # 添加参数
-        # self.infer_dict['bad_words_ids'] = self.bad_words_ids
+        self.bad_words = [
+            # 罗马数字: [40, 5660, 23440, 3166, 53, 26376, 5660, 23440, 5511, 55, 84214, 5660, 23440, 3166, 53, 3166, 5660, 23440]
+            " I", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X", " XI", " XII", " XIII", " XIV", " XV", " XVI", " XVII"
+            " XXIV", " XXXV", " XXVII", " XXXIII",
+        ]
+        self.logits_processor = LogitsProcessorList([BadWordsLogitsProcessor(self.bad_words, self.tokenizer)])
 
     def unload_model(self):
         if self.model:
@@ -287,7 +304,8 @@ class LLM_Llama_V3(ET_LLM):
                                                               tokenizer=self.tokenizer)
         stopping_criteria = StoppingCriteriaList()
         stopping_criteria.append(sentence_stopping_criteria)
-        outputs = self.model.generate(input_ids=input_ids, stopping_criteria=stopping_criteria, **infer_params)
+        outputs = self.model.generate(input_ids=input_ids, logits_processor=self.logits_processor,
+                                      stopping_criteria=stopping_criteria, **infer_params)
         outputs = outputs.tolist()
         # print(f'len(outputs)={len(outputs)}')
         outputs = outputs[0][len(input_ids[0]):]
