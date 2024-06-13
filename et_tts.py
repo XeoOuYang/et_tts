@@ -16,17 +16,21 @@ def tts_chat_tts(text: str, ref_speaker, **kwargs):
         TTS_INSTANCE['chat_tts'] = ChatTTS()
     tts = TTS_INSTANCE['chat_tts']
     ret_path = tts.tts(text=text, ref_speaker=f'{ref_speaker}', manual_seed=ref_speaker, **kwargs)
-    # 降噪
+    # 降噪，时间可忽略
     from et_base import timer
-    with timer('wav_denoise'):
-        # from Wav_Denoiser.wav_denoise import Wav_Denoise
-        # ret_path = Wav_Denoise().denoise(ret_path, **kwargs)
-        from Wav_Enhance.wav_enhance import Wav_Enhance
-        ret_path = Wav_Enhance().denoise(ret_path, **kwargs)
-    # 增强
-    # with timer('wav_enhance'):
-    #     from Wav_Enhance.wav_enhance import Wav_Enhance
-    #     ret_path = Wav_Enhance().enhance(ret_path, **kwargs)
+    enable_denoise = kwargs['enable_denoise'] if 'enable_denoise' in kwargs else True
+    enable_enhance = kwargs['enable_enhance'] if 'enable_enhance' in kwargs else False
+    if enable_enhance:
+        # 增强，时间要增加20s~30s
+        with timer('wav_enhance'):
+            from Wav_Enhance.wav_enhance import Wav_Enhance
+            # 需要降噪选0.9，只是增强选择0.1
+            lambd = 0.9 if enable_denoise else 0.1
+            ret_path = Wav_Enhance(lambd=lambd).enhance(ret_path, **kwargs)
+    elif enable_denoise:
+        with timer('wav_denoise'):
+            from Wav_Enhance.wav_enhance import Wav_Enhance
+            ret_path = Wav_Enhance().denoise(ret_path, **kwargs)
     return ret_path
 
 

@@ -4,7 +4,7 @@ from LLM_AI.llm_llama import LLM_Llama_V3
 from LLM_AI.llm_glm import LLM_GLM_4
 
 LLM_INSTANCE = {
-    'llama_v3': LLM_Llama_V3(),
+    'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V6'),
     'glm_4': LLM_GLM_4()
 }
 
@@ -25,7 +25,9 @@ def llm_glm_4(query, role_play, context, inst_text, **kwargs):
     llm = LLM_INSTANCE['glm_4']
     system_text = f'{role_play}\n\n{context}\n\n{inst_text}'
     an = llm.llm(query=query, system=system_text, enable_history=True, **kwargs)
-    return an
+    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
+    # 对内容格式化
+    return _post_llm_(an, max_num_sentence)
 
 
 def llm_llama_v3(query, role_play, context, inst_text, **kwargs):
@@ -35,7 +37,9 @@ def llm_llama_v3(query, role_play, context, inst_text, **kwargs):
     llm = LLM_INSTANCE['llama_v3']
     system_text = f'{role_play}\n\n{context}\n\n{inst_text}'
     an = llm.llm(query=query, system=system_text, enable_history=True, **kwargs)
-    return an
+    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
+    # 对内容格式化
+    return _post_llm_(an, max_num_sentence)
 
 
 def llm(query, role_play, context, inst_text, **kwargs):
@@ -48,16 +52,19 @@ def llm(query, role_play, context, inst_text, **kwargs):
     """
     # an = llm_llama_v3(query, role_play, context, inst_text, **kwargs)
     an = llm_glm_4(query, role_play, context, inst_text, **kwargs)
+    max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
     # 对内容格式化
-    if an.startswith('.'):
-        an = an[1:]
+    return _post_llm_(an, max_num_sentence)
+
+
+def _post_llm_(an, max_num_sentence):
+    if an.startswith('.'): an = an[1:]
     # 如果有断句限制
-    if 'max_num_sentence' in kwargs:
-        max_num_sentence = kwargs['max_num_sentence']
-        arr_list = re.split(r'\.|\?|!', an)
+    if max_num_sentence > 0:
+        arr_list = re.split(r'\.|\?|!|。|？|！', an)
         if len(arr_list) > max_num_sentence:
             arr_list[max_num_sentence] = ''
-            an = '.'.join(arr_list[:max_num_sentence+1])
+            an = '.'.join(arr_list[:max_num_sentence + 1])
     # 对llm输出文本格式化
     an = re.sub(r'(\.)\1+', '.', an)
     an = re.sub(r'(_)\1+', '', an)

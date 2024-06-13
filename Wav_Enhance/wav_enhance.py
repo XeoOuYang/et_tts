@@ -17,7 +17,7 @@ from et_base import ET_BASE
 
 
 class Wav_Enhance(ET_BASE):
-    def __init__(self, nfe=32, solver='midpoint', lambd=0.5, tau=0.5):
+    def __init__(self, nfe=64, solver='rk4', lambd=0.9, tau=0.5):
         super().__init__()
         """
         nfe: 1~128

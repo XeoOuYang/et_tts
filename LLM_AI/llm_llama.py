@@ -172,9 +172,9 @@ class LLM_Llama_V3(ET_LLM):
         self.model = None
         self.tokenizer = None
         self.stop_token_id = None
-        self.history = None
         self.infer_dict = None
         self.sentence_token_id_list = None
+        self.history_cached = None
         # # bad_words_ids
         # self.bad_words_ids = None
 
@@ -210,7 +210,7 @@ class LLM_Llama_V3(ET_LLM):
             self.tokenizer.encode(':', add_special_tokens=False)[-1],
         ]
         # print(self.sentence_token_id_list)
-        self.history = []
+        self.history_cached: dict[str, list] = {}
         # # bad_words_ids
         # bad_words_ids = []
         # for word in ["<|start_header_id|>", "<|end_header_id|>", "system", "user", "assistant"]:
@@ -238,11 +238,10 @@ class LLM_Llama_V3(ET_LLM):
         #     return ''
         print(f"query=>{system}\n\n{query}")
         query = query.strip()
-        # 历史记录
-        enable_history = False
-        if 'enable_history' in kwargs:
-            enable_history = kwargs['enable_history']
-        history = self.history.copy() if enable_history else []
+        # 历史记录，通过uuid绑定
+        uuid_key = kwargs['uuid'] if 'uuid' in kwargs else None
+        history = self.history_cached[uuid_key] if uuid_key is not None and uuid_key in self.history_cached else []
+        if len(history) > 0: history = history.copy()
         # 构建参数
         infer_params = self.infer_dict.copy()
         if kwargs:  # 只接受配置参数
@@ -279,6 +278,7 @@ class LLM_Llama_V3(ET_LLM):
         # 历史记录
         history.append({"role": 'user', 'message': query})
         history.append({"role": 'assistant', 'message': an})
+        if uuid_key is not None: self.history_cached[uuid_key] = history
         # 返回结果
         print("infer<=", an)
         return an
