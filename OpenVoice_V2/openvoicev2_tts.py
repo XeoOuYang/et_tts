@@ -47,7 +47,7 @@ class OpenVoiceV2_TTS(ET_TTS):
 
     def tts(self, text: str, ref_speaker: str, **kwargs):
         from et_base import text_normalize
-        text = text_normalize(text)
+        text = text_normalize(text, True)
         # return self.tts_v1(text, ref_speaker, **kwargs)
         return self.tts_v2(text, ref_speaker, **kwargs)
 

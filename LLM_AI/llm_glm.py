@@ -1,4 +1,5 @@
 import os.path
+import re
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -44,12 +45,11 @@ from transformers.generation.stopping_criteria import StoppingCriteria, Stopping
 
 
 class SentenceStoppingCriteria(StoppingCriteria):
-    def __init__(self, max_num_sentence: int = 1, sentence_token_id_list: [int] = None, dot_token_id: int = None,
-                 stop_token_id_list: [int] = None, stop_word: str = None, tokenizer=None):
+    def __init__(self, max_num_sentence: int, sentence_token_list: [int], dot_token: int,
+                 stop_token_id_list: [int], stop_word: str, tokenizer):
         self._max_num_sentence = max_num_sentence
-        self._sentence_token_id_list = sentence_token_id_list
-        self._dot_token_id = dot_token_id
-        if not self._sentence_token_id_list: self._sentence_token_id_list = []
+        self._sentence_token_list = sentence_token_list
+        self._sentence_pattern = r'[' + ''.join(self._sentence_token_list) + ']|\.'
         self._count_num_sentence = 0
         self._stop_token_id_list = stop_token_id_list
         self._stop_word = stop_word
@@ -59,8 +59,15 @@ class SentenceStoppingCriteria(StoppingCriteria):
         self.tokens_decoded_words = []
         # 过滤bad cases
         self._model_tokenizer = tokenizer
+        self._sentence_token_id_list = [self._model_tokenizer.encode(_ch, add_special_tokens=False)[-1] for _ch in self._sentence_token_list]
+        if not self._sentence_token_id_list: self._sentence_token_id_list = []
+        self._dot_token_id = self._model_tokenizer.encode(dot_token, add_special_tokens=False)[-1]
         # 停止理由
         self.reason_stop = 'max_new_token'
+
+    def _count_sentence(self, text):
+        matches = re.findall(self._sentence_pattern, text)
+        return len(matches)
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs):
         current_token_id = input_ids[0][-1].detach().cpu().numpy()
@@ -83,6 +90,15 @@ class SentenceStoppingCriteria(StoppingCriteria):
             if self._count_num_sentence >= self._max_num_sentence:
                 self.reason_stop = 'max_sentence'
                 return True
+        else:
+            count_sentence = self._count_sentence(self.tokens_decoded_words[-1])
+            if count_sentence > 0:
+                self._count_num_sentence += count_sentence
+                self.last_sentence_token_idx = self._count_token + 1
+                # 判断句子数量
+                if self._count_num_sentence >= self._max_num_sentence:
+                    self.reason_stop = 'max_sentence'
+                    return True
         # 判断结束符号
         if current_token_id in self._stop_token_id_list:
             self.reason_stop = 'eos_token'
@@ -106,7 +122,7 @@ class LLM_GLM_4(ET_LLM):
         self.tokenizer = None
         self.stop_token_id = None
         self.infer_dict = None
-        self.sentence_token_id_list = None
+        self.sentence_token_list = None
         self.history_cached = None
 
     def lazy_load(self):
@@ -117,10 +133,10 @@ class LLM_GLM_4(ET_LLM):
         self.infer_dict = {
             'max_new_tokens': 256,
             'min_new_tokens': 8,
-            'top_p': 0.1,
-            'top_k': 8,
+            'top_p': 0.75,
+            'top_k': 3,
             'temperature': 0.95,
-            'repetition_penalty': 1.05,
+            'repetition_penalty': 1.5,
             'eos_token_id': self.stop_token_id[0],
             'pad_token_id': self.tokenizer.eos_token_id,
             'do_sample': True,
@@ -128,16 +144,7 @@ class LLM_GLM_4(ET_LLM):
             'length_penalty': 1.5,
             # 'max_length': 4096
         }
-        self.sentence_token_id_list = [
-            self.tokenizer.encode('!', add_special_tokens=False)[-1],
-            self.tokenizer.encode('！', add_special_tokens=False)[-1],
-            self.tokenizer.encode('.', add_special_tokens=False)[-1],
-            self.tokenizer.encode('。', add_special_tokens=False)[-1],
-            self.tokenizer.encode('?', add_special_tokens=False)[-1],
-            self.tokenizer.encode('？', add_special_tokens=False)[-1],
-            self.tokenizer.encode(':', add_special_tokens=False)[-1],
-            self.tokenizer.encode('：', add_special_tokens=False)[-1],
-        ]
+        self.sentence_token_list = ['!', '！', '.', '。', '?', '？', ':', '：']
         # print(self.sentence_token_id_list)
         self.history_cached = []
 
@@ -171,6 +178,7 @@ class LLM_GLM_4(ET_LLM):
                 if k in kwargs: infer_params[k] = kwargs[k]
         # 最大句子数限制
         max_num_sentence = 3 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
+        max_num_sentence = min(max(max_num_sentence, 1), 6)
         # prompt编码
         history.insert(0, {"role": "system", "content": system})
         history.append({"role": "user", "content": query})
@@ -188,8 +196,8 @@ class LLM_GLM_4(ET_LLM):
         infer_params['max_new_tokens'] = max_new_tokens
         infer_params['min_new_tokens'] = min_new_tokens
         sentence_stopping_criteria = SentenceStoppingCriteria(max_num_sentence=max_num_sentence,
-                                                              sentence_token_id_list=self.sentence_token_id_list,
-                                                              dot_token_id=self.sentence_token_id_list[1],
+                                                              sentence_token_list=self.sentence_token_list,
+                                                              dot_token=self.sentence_token_list[1],
                                                               stop_token_id_list=self.stop_token_id,
                                                               stop_word='<|endoftext|>',
                                                               tokenizer=self.tokenizer)

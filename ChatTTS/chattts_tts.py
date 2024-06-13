@@ -116,6 +116,9 @@ class ChatTTS(ET_TTS):
         }
         if 'infer_prompt' in kwargs:
             params_infer_code['prompt'] = kwargs['infer_prompt']
+        # 指定语言
+        language = 'english' if 'language' not in kwargs else kwargs['language']
+        language = language.lower()
         # 并行推理
         wav_list = []
         from ChatTTS.tools import text_normalize, text_split, batch_split
@@ -131,11 +134,11 @@ class ChatTTS(ET_TTS):
             # 判断ratio返回结果
             from ChatTTS.tools import normalize_infer_text
             if ratio > 0.5:
-                return normalize_infer_text(_new)
+                return normalize_infer_text(_new, language)
             else:
                 return _old
         with SeedContext(manual_seed, True):
-            for batch in batch_split(text_split(text_normalize(text))):
+            for batch in batch_split(text_split(text_normalize(text, True))):
                 wav_arr = self.model.infer(batch, params_infer_code=params_infer_code,
                                            normalize_infer_text=post_infer_text, params_refine_text=params_refine_text,
                                            skip_refine_text=skip_refine_text, use_decoder=True)

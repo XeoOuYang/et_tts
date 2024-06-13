@@ -66,15 +66,16 @@ def remove_punctuation(text):
     return text
 
 
-def normalize_infer_text(text):
-    # 中文汉字
-    adjust_pattern = re.compile(r'\b[a-zA-Z]*[\u4e00-\u9fa5]+[a-zA-Z]*\b')
-    text = re.sub(adjust_pattern, '', text)
-    # bad case
-    text = re.sub(r'](.*?)\s+california\b', '] ', text)
-    text = re.sub(r']\w+\b', '] ', text)
-    text = re.sub(r']\s+(tan|io|so|p)\b', '] ', text)
-    text = re.sub(r']\s+like\s*(p|io)?\b', '] ', text)
+def normalize_infer_text(text, lang='english'):
+    if lang == 'english':
+        # 中文汉字
+        adjust_pattern = re.compile(r'\b[a-zA-Z]*[\u4e00-\u9fa5]+[a-zA-Z]*\b')
+        text = re.sub(adjust_pattern, '', text)
+        # bad case
+        text = re.sub(r'](.*?)\s+california\b', '] ', text)
+        text = re.sub(r']\w+\b', '] ', text)
+        text = re.sub(r']\s+(tan|io|so|p)\b', '] ', text)
+        text = re.sub(r']\s+like\s*(p|io)?\b', '] ', text)
     # 连续空格
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
@@ -163,12 +164,15 @@ def apply_character_map(text):
     return text.translate(translation_table)
 
 
-def text_normalize(text):
+def text_normalize(text, is_tts):
     text = remove_punctuation(text)
     text = replace_dollar_sign(text)
     text = replace_percentage_sign(text)
     text = replace_numeric(text)
-    text = insert_spaces_between_uppercase(text)
+    if is_tts: text = insert_spaces_between_uppercase(text)
+    # 连续空格
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
     return text
 
 
