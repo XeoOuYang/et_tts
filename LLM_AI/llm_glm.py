@@ -109,13 +109,16 @@ class LLM_GLM_4(ET_LLM):
         # 默认推理参数
         self.infer_dict = {
             'max_new_tokens': 256,
-            'top_p': 0.25,
-            'top_k': 64,
+            'top_p': 0.1,
+            'top_k': 8,
             'temperature': 0.95,
             'repetition_penalty': 1.05,
+            'eos_token_id': self.stop_token_id[0],
+            'pad_token_id': self.tokenizer.eos_token_id,
             'do_sample': True,
             'no_repeat_ngram_size': 2,
-            'length_penalty': 0.7
+            'length_penalty': 0.7,
+            # 'max_length': 4096
         }
         # 0 means "!", # 13 means ".",# 30 means "?"
         self.sentence_token_id_list = [
@@ -147,7 +150,7 @@ class LLM_GLM_4(ET_LLM):
         print(f"query=>{system}\n\n{query}")
         query = query.strip()
         # 历史记录，通过uuid绑定
-        uuid_key = kwargs['uuid'] if 'uuid' in kwargs else None
+        uuid_key = kwargs['et_uuid'] if 'et_uuid' in kwargs else None
         history = self.history_cached[uuid_key] if uuid_key is not None and uuid_key in self.history_cached else []
         if len(history) > 0: history = history.copy()
         # 构建参数

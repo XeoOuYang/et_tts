@@ -64,7 +64,7 @@ async def shutdown():
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse({"message": exc.detail, "payload": request.body()}, status_code=exc.status_code)
+    return JSONResponse({"message": exc.detail, "payload": await request.json()}, status_code=exc.status_code)
 
 
 @app.post('/llm/tts/tr')
@@ -150,7 +150,7 @@ async def llm_async(kwargs: dict = None):
     spc_type = payload.pop('spc_type') if 'spc_type' in payload else 'llm_llama'
     # 参数normalize
     max_new_tokens = payload['max_new_tokens'] if 'max_new_tokens' in payload else 256
-    payload['max_new_tokens'] = max(max_new_tokens, 2*len(query))
+    payload['max_new_tokens'] = max(max_new_tokens, len(query))
     # 同步访问
     await _llm_lock_.acquire()
     try:
