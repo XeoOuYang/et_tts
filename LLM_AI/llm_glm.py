@@ -4,8 +4,6 @@ import re
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from et_base import check_multi_head_attention
-from dataclasses import dataclass
-from typing import Dict
 import warnings
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 from et_dirs import llm_ai_base, model_dir_base
@@ -135,8 +133,8 @@ class LLM_GLM_4(ET_LLM):
             'min_new_tokens': 8,
             'top_p': 0.75,
             'top_k': 3,
-            'temperature': 0.95,
-            'repetition_penalty': 1.5,
+            'temperature': 0.7,
+            'repetition_penalty': 1.2,
             'eos_token_id': self.stop_token_id[0],
             'pad_token_id': self.tokenizer.eos_token_id,
             'do_sample': True,
