@@ -18,7 +18,7 @@ def tts_chat_tts(text: str, ref_speaker, **kwargs):
     ret_path = tts.tts(text=text, ref_speaker=f'{ref_speaker}', manual_seed=ref_speaker, **kwargs)
     # 降噪，时间可忽略
     from et_base import timer
-    enable_denoise = kwargs['enable_denoise'] if 'enable_denoise' in kwargs else True
+    enable_denoise = kwargs['enable_denoise'] if 'enable_denoise' in kwargs else False
     enable_enhance = kwargs['enable_enhance'] if 'enable_enhance' in kwargs else False
     if enable_enhance:
         # 增强，时间要增加20s~30s

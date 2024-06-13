@@ -168,6 +168,7 @@ def text_normalize(text):
     text = replace_dollar_sign(text)
     text = replace_percentage_sign(text)
     text = replace_numeric(text)
+    text = insert_spaces_between_uppercase(text)
     return text
 
 

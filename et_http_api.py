@@ -20,14 +20,15 @@ async def post_retry(url, headers, data):
     return session.post(url, headers=headers, json=data)
 
 
-async def llm_async(query, role_play, context, inst_text, max_num_sentence, repetition_penalty, language="english"):
+async def llm_async(query, role_play, context, inst_text, max_num_sentence, repetition_penalty,
+                    et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/llm/tr"
     headers = {
         "accept": "application/json",
         "Content-Type": "application/json"
     }
     data = {
-        "et_uuid": _ET_UUID_,
+        "et_uuid": et_uuid,
         "language": language,
         "query": query,
         "role_play": role_play,
@@ -45,7 +46,7 @@ async def llm_async(query, role_play, context, inst_text, max_num_sentence, repe
         return ""
 
 
-async def tts_async(text, ref_name, out_name, spc_type, language="english"):
+async def tts_async(text, ref_name, out_name, spc_type, et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/tts/tr"
     headers = {
         "accept": "application/json",
@@ -58,7 +59,7 @@ async def tts_async(text, ref_name, out_name, spc_type, language="english"):
     # "manual_seed": 0       # 指定音色: 414女，410男
     # "skip_refine_text": False # True表示自行插入语气
     data = {
-        "et_uuid": _ET_UUID_,
+        "et_uuid": et_uuid,
         "language": language,
         "text": text,
         "out_name": out_name,
@@ -75,3 +76,38 @@ async def tts_async(text, ref_name, out_name, spc_type, language="english"):
         return resp_json['path']
     else:
         return ""
+
+
+async def sop_llm_tts_async(query, role_play, context, inst_text, max_num_sentence,
+                            out_name, spc_type, ref_name, et_uuid=_ET_UUID_, language="english"):
+    url = f"{HOST}/llm/tts/tr"
+    headers = {
+        "accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "llm_param": {
+            "et_uuid": et_uuid,
+            "language": language,
+            "query": query,
+            "role_play": role_play,
+            "context": context,
+            "inst_text": inst_text,
+            "spc_type": 'llm_llama',
+            "max_num_sentence": max_num_sentence,
+        },
+        "tts_param": {
+            "et_uuid": et_uuid,
+            "language": language,
+            "out_name": out_name,
+            "spc_type": spc_type,
+            "ref_name": ref_name,
+            "manual_seed": ref_name,
+        }
+    }
+    response = await post_retry(url, headers, data)
+    if response.status_code == 200:
+        resp_json = json.loads(response.text)
+        return resp_json['text'], resp_json['path']
+    else:
+        return "", ""

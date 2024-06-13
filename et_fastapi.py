@@ -104,14 +104,14 @@ async def sop_llm_tts_async(kwargs: dict = None):
     assert 'llm_param' in payload and 'tts_param' in payload
     # 启动llm任务
     llm_param = payload.pop('llm_param')
-    llm_resp = await llm_async(**llm_param)
+    llm_resp = await llm_async(llm_param)
     if llm_resp.status_code != 200:
         return llm_resp
     llm_text = json.loads(llm_resp.body)['text']
     # 继续tts任务
     tts_param = payload.pop('tts_param')
     tts_param['text'] = llm_text
-    tts_resp = await tts_async(**tts_param)
+    tts_resp = await tts_async(tts_param)
     if tts_resp.status_code != 200:
         return tts_resp
     tts_path = json.loads(tts_resp.body)['path']
