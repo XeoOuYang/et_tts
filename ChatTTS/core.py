@@ -127,7 +127,8 @@ class Chat:
         params_refine_text={}, 
         params_infer_code={}, 
         use_decoder=False,
-        extra_refine_logits=None
+        extra_refine_logits=None,
+        extra_infer_logits=None
     ):
         
         assert self.check_model(use_decoder=use_decoder)
@@ -151,7 +152,7 @@ class Chat:
         print('batch<====', text)
         text = [params_infer_code.get('prompt', '') + i for i in text]
         params_infer_code.pop('prompt', '')
-        result = infer_code(self.pretrain_models, text, **params_infer_code, return_hidden=use_decoder)
+        result = infer_code(self.pretrain_models, text, extra_infer_logits=extra_infer_logits, **params_infer_code, return_hidden=use_decoder)
 
         if use_decoder:
             mel_spec = [self.pretrain_models['decoder'](i[None].permute(0,2,1)) for i in result['hiddens']]

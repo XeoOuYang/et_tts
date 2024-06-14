@@ -36,6 +36,9 @@ class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
         self._value_to_set = value_to_set
         self._indicator_to_set = None
 
+    def adjust_token(self, token_id):
+        self._language_token_id_list = [token for token in self._language_token_id_list if token != token_id]
+
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
         scores[:, self._language_token_id_list] = self._value_to_set
         return scores

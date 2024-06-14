@@ -13,6 +13,7 @@ def infer_code(
     temperature = 0.3, 
     repetition_penalty = 1.05,
     max_new_token = 2048,
+    extra_infer_logits=None,
     **kwargs
 ):
     
@@ -57,6 +58,10 @@ def infer_code(
     if repetition_penalty is not None and repetition_penalty != 1:
         LogitsProcessors.append(CustomRepetitionPenaltyLogitsProcessorRepeat(\
             repetition_penalty, num_code, 16))
+    # 中英文处理
+    if extra_infer_logits is not None:
+        extra_infer_logits.adjust_token(num_code)
+        LogitsWarpers.append(extra_infer_logits)
 
     result = models['gpt'].generate(
         emb, inputs['input_ids'], 

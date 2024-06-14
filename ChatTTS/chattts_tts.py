@@ -138,11 +138,11 @@ class ChatTTS(ET_TTS):
         # 指定语言
         language = 'english' if 'language' not in kwargs else kwargs['language']
         language = language.lower()
-        logits_processor = LogitsProcessorList()
+        logits_processor = None
         if language == 'chinese':
-            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en))
+            logits_processor = ForceTokenFixValueLogitsProcessor(self._masked_indicator_en)
         elif language == 'english':
-            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_cn))
+            logits_processor = ForceTokenFixValueLogitsProcessor(self._masked_indicator_cn)
         print('language =', language)
         # 并行推理
         wav_list = []
