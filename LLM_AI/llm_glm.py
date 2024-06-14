@@ -2,7 +2,9 @@ import os.path
 import re
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList
+
+from LLM_AI.llm_base import SentenceStoppingCriteria
 from et_base import check_multi_head_attention
 import warnings
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -39,74 +41,14 @@ def load_tokenizer(model_name_or_path, add_prefix_space=False):
     return tokenizer
 
 
-from transformers.generation.stopping_criteria import StoppingCriteria, StoppingCriteriaList
-
-
-class SentenceStoppingCriteria(StoppingCriteria):
-    def __init__(self, max_num_sentence: int, sentence_token_list: [int], dot_token: int,
-                 stop_token_id_list: [int], stop_word: str, tokenizer):
-        self._max_num_sentence = max_num_sentence
-        self._sentence_token_list = sentence_token_list
-        self._sentence_pattern = r'[' + ''.join(self._sentence_token_list) + ']|\.'
-        self._count_num_sentence = 0
-        self._stop_token_id_list = stop_token_id_list
-        self._stop_word = stop_word
-        if not self._stop_token_id_list: self._stop_token_id_list = []
-        self.last_sentence_token_idx = 0
-        self._count_token = 0
-        self.tokens_decoded_words = []
-        # 过滤bad cases
-        self._model_tokenizer = tokenizer
-        self._sentence_token_id_list = [self._model_tokenizer.encode(_ch, add_special_tokens=False)[-1] for _ch in self._sentence_token_list]
-        if not self._sentence_token_id_list: self._sentence_token_id_list = []
-        self._dot_token_id = self._model_tokenizer.encode(dot_token, add_special_tokens=False)[-1]
-        # 停止理由
-        self.reason_stop = 'max_new_token'
-
-    def _count_sentence(self, text):
-        matches = re.findall(self._sentence_pattern, text)
-        return len(matches)
-
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs):
-        current_token_id = input_ids[0][-1].detach().cpu().numpy()
-        current_token_id = current_token_id[()]
+class GLMSentenceStoppingCriteria(SentenceStoppingCriteria):
+    def _decode_token(self, token_id):
         try:
-            self.tokens_decoded_words.append(self._model_tokenizer.decode(current_token_id))
+            value = self._model_tokenizer.decode(token_id)
         except TypeError:
-            value = self._model_tokenizer._convert_id_to_token(current_token_id).decode("utf-8", errors="replace")
-            self.tokens_decoded_words.append(value)
-        # 开始判断逻辑
-        if current_token_id in self._sentence_token_id_list:  # 当前是!.?其中一个
-            if current_token_id == self._dot_token_id:  # 处理小数点
-                if not str.isdigit(self.tokens_decoded_words[-2]):
-                    self._count_num_sentence += 1
-                    self.last_sentence_token_idx = self._count_token + 1
-            else:  # 其他情况
-                self._count_num_sentence += 1
-                self.last_sentence_token_idx = self._count_token + 1
-            # 判断句子数量
-            if self._count_num_sentence >= self._max_num_sentence:
-                self.reason_stop = 'max_sentence'
-                return True
-        else:
-            count_sentence = self._count_sentence(self.tokens_decoded_words[-1])
-            if count_sentence > 0:
-                self._count_num_sentence += count_sentence
-                self.last_sentence_token_idx = self._count_token + 1
-                # 判断句子数量
-                if self._count_num_sentence >= self._max_num_sentence:
-                    self.reason_stop = 'max_sentence'
-                    return True
-        # 判断结束符号
-        if current_token_id in self._stop_token_id_list:
-            self.reason_stop = 'eos_token'
-            return True
-        if self._stop_word in self.tokens_decoded_words[-1]:
-            self.reason_stop = 'stop_word'
-            return True
-        # 计算token数量
-        self._count_token += 1
-        return False
+            value = self._model_tokenizer._convert_id_to_token(token_id).decode("utf-8", errors="replace")
+        # 返回对应解码
+        return value
 
 
 class LLM_GLM_4(ET_LLM):
@@ -193,7 +135,7 @@ class LLM_GLM_4(ET_LLM):
         min_new_tokens = max(min_new_tokens, qa_ids_tokens // 2)
         infer_params['max_new_tokens'] = max_new_tokens
         infer_params['min_new_tokens'] = min_new_tokens
-        sentence_stopping_criteria = SentenceStoppingCriteria(max_num_sentence=max_num_sentence,
+        sentence_stopping_criteria = GLMSentenceStoppingCriteria(max_num_sentence=max_num_sentence,
                                                               sentence_token_list=self.sentence_token_list,
                                                               dot_token=self.sentence_token_list[1],
                                                               stop_token_id_list=self.stop_token_id,
