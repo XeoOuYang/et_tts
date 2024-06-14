@@ -108,12 +108,13 @@ def refine_text(
         LogitsWarpers.append(TopPLogitsWarper(top_P, min_tokens_to_keep=3))
     if top_K is not None:
         LogitsWarpers.append(TopKLogitsWarper(top_K, min_tokens_to_keep=3))
-    if extra_refine_logits is not None:
-        LogitsWarpers.append(extra_refine_logits)
-        
+
     LogitsProcessors = []
     if repetition_penalty is not None and repetition_penalty != 1:
         LogitsProcessors.append(CustomRepetitionPenaltyLogitsProcessorRepeat(repetition_penalty, len(models['tokenizer']), 16))
+    # 中英文混杂处理
+    if extra_refine_logits is not None:
+        LogitsProcessors.append(extra_refine_logits)
     
     result = models['gpt'].generate(
         models['gpt'].get_emb(**inputs), inputs['input_ids'], 
