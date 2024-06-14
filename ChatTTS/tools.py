@@ -60,7 +60,7 @@ def sentence_split(text, expt_length) -> list[str]:
 
 
 def remove_punctuation(text):
-    punctuation_pattern = r"[；（）【】『』「」《》－‘“’”;\(\)\[\]><\-\"]"
+    punctuation_pattern = r"[：；（）【】『』「」《》－‘“’”:;\(\)\[\]><\-'\"]"
     text = re.sub(punctuation_pattern, ' ', text)
     # 使用正则表达式将多个连续的句号替换为一个句号
     text = re.sub(r'。{2,}', '。', text)

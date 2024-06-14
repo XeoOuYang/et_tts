@@ -97,6 +97,4 @@ if __name__ == '__main__':
         an = llm_glm_4(query, role_play='You are a super seller. You are selling products in air now. ',
                           context=context, inst_text='You can only rely in English.')
     print(an)
-    # todo: 禁止罗马数字
     # todo: 只允许英文/汉字
-    # todo: 静止非法字符
