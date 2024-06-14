@@ -65,7 +65,7 @@ def reserve_char_all(text):
 def is_chinese(text):
     # 中文
     pattern = r'[\u4e00-\u9fff\u3000-\u303f\uac00-\ud7af]+'
-    if re.match(pattern, text):
+    if len(re.findall(pattern, text)) > 0:
         return True
     else:
         return False
@@ -74,7 +74,7 @@ def is_chinese(text):
 def is_english(text):
     # 英文
     pattern = r'[a-zA-Z]+'
-    if re.match(pattern, text):
+    if len(re.findall(pattern, text)) > 0:
         return True
     else:
         return False
@@ -222,9 +222,9 @@ if __name__ == '__main__':
     # min_high = sys.maxsize
     # max_low = 0
     # min_low = sys.maxsize
-    from et_dirs import resources
-    ref_audio = os.path.join(resources, f'example_reference.mp3')
-    for path in audio_list:
+    # from et_dirs import resources
+    # ref_audio = os.path.join(resources, f'example_reference.mp3')
+    # for path in audio_list:
         # print(path, '===>', detect_silence(path))
         # high, mean, low = detect_db(path)
         # high, mean, low = detect_eletric(path)
@@ -233,5 +233,5 @@ if __name__ == '__main__':
         # min_high = min(min_high, abs(high))
         # max_low = max(max_low, abs(low))
         # min_low = min(min_low, abs(low))
-        detect_pesq(path, ref_audio)
+        # detect_pesq(path, ref_audio)
     # print('max/min===>', max_high, min_high, max_low, min_low)
