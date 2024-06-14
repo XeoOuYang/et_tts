@@ -6,6 +6,10 @@ import shutil
 import numpy
 
 import torch
+from transformers import LogitsProcessorList
+
+from LLM_AI.llm_base import ForceTokenFixValueLogitsProcessor
+
 torch._dynamo.config.cache_size_limit = 64
 torch._dynamo.config.suppress_errors = True
 torch.set_float32_matmul_precision('high')
@@ -69,6 +73,14 @@ class ChatTTS(ET_TTS):
         self.manual_seed = manual_seed
         self.skip_refine_text = not refine_text
         self.cached_spk_emb = {}
+        # 中英文处理
+        self.tokenizer = self.model.pretrain_models["tokenizer"]
+        # 中文
+        from et_base import is_chinese
+        self._masked_indicator_cn = [token_id for token, token_id in self.tokenizer.vocab.items() if is_chinese(token)]
+        # 英文
+        from et_base import is_english
+        self._masked_indicator_en = [token_id for token, token_id in self.tokenizer.vocab.items() if is_english(token)]
 
     def sample_speaker(self, manual_seed):
         from ChatTTS.spec_voices.load_voice import spec_voice
@@ -119,6 +131,12 @@ class ChatTTS(ET_TTS):
         # 指定语言
         language = 'english' if 'language' not in kwargs else kwargs['language']
         language = language.lower()
+        logits_processor = LogitsProcessorList()
+        if language == 'chinese':
+            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en))
+        elif language == 'english':
+            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_cn))
+        print('language =', language)
         # 并行推理
         wav_list = []
         from ChatTTS.tools import text_normalize, text_split, batch_split
@@ -142,7 +160,7 @@ class ChatTTS(ET_TTS):
                 return _old
         with SeedContext(manual_seed, True):
             for batch in batch_split(text_split(text_normalize(text, True), language)):
-                wav_arr = self.model.infer(batch, params_infer_code=params_infer_code,
+                wav_arr = self.model.infer(batch, params_infer_code=params_infer_code, extra_refine_logits=logits_processor,
                                            normalize_infer_text=post_infer_text, params_refine_text=params_refine_text,
                                            skip_refine_text=skip_refine_text, use_decoder=True)
                 wav_list.extend(wav_arr)

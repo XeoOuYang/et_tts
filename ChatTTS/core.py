@@ -126,13 +126,14 @@ class Chat:
         normalize_infer_text=None,
         params_refine_text={}, 
         params_infer_code={}, 
-        use_decoder=False
+        use_decoder=False,
+        extra_refine_logits=None
     ):
         
         assert self.check_model(use_decoder=use_decoder)
         if not skip_refine_text:
             old_text = text
-            text_tokens = refine_text(self.pretrain_models, text, **params_refine_text)['ids']
+            text_tokens = refine_text(self.pretrain_models, text, extra_refine_logits=extra_refine_logits, **params_refine_text)['ids']
             text_tokens = [i[i < self.pretrain_models['tokenizer'].convert_tokens_to_ids('[break_0]')] for i in text_tokens]
             text = self.pretrain_models['tokenizer'].batch_decode(text_tokens)
             if normalize_infer_text:

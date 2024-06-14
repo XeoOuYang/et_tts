@@ -50,6 +50,11 @@ class GLMSentenceStoppingCriteria(SentenceStoppingCriteria):
         # 返回对应解码
         return value
 
+    def _current_token_id(self, input_ids):
+        current_token_id = input_ids[0][-1].detach().cpu().numpy()
+        current_token_id = current_token_id[()]
+        return current_token_id
+
 
 class LLM_GLM_4(ET_LLM):
     def __init__(self, model_name: str = 'ZhipuAI/glm-4-9b-chat', temp_name: str = 'glm4'):

@@ -185,13 +185,9 @@ class LLM_Llama_V3(ET_LLM):
         # 中文
         from et_base import is_chinese
         self._masked_indicator_cn = [token_id for token, token_id in self.tokenizer.vocab.items() if is_chinese(token)]
-        # self._masked_indicator_cn.extend(punctuation_token_id_list)
-        self._masked_indicator_cn.extend([self.stop_token_id, self.tokenizer.eos_token_id])
         # 英文
         from et_base import is_english
         self._masked_indicator_en = [token_id for token, token_id in self.tokenizer.vocab.items() if is_english(token)]
-        # self._masked_indicator_en.extend(punctuation_token_id_list)
-        self._masked_indicator_en.extend([self.stop_token_id, self.tokenizer.eos_token_id])
 
     def unload_model(self):
         if self.model:

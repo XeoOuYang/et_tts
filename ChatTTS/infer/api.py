@@ -82,6 +82,7 @@ def refine_text(
     repetition_penalty = 1.0,
     max_new_token = 384,
     prompt = '',
+    extra_refine_logits=None,
     **kwargs
 ):
     
@@ -107,6 +108,8 @@ def refine_text(
         LogitsWarpers.append(TopPLogitsWarper(top_P, min_tokens_to_keep=3))
     if top_K is not None:
         LogitsWarpers.append(TopKLogitsWarper(top_K, min_tokens_to_keep=3))
+    if extra_refine_logits is not None:
+        LogitsWarpers.append(extra_refine_logits)
         
     LogitsProcessors = []
     if repetition_penalty is not None and repetition_penalty != 1:

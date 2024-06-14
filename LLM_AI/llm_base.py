@@ -75,8 +75,12 @@ class SentenceStoppingCriteria(StoppingCriteria):
     def _decode_token(self, token_id):
         return self._model_tokenizer.decode(token_id)
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs):
+    def _current_token_id(self, input_ids):
         current_token_id = input_ids[0][-1].detach().cpu().numpy()
+        return current_token_id
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs):
+        current_token_id = self._current_token_id(input_ids)
         self.tokens_decoded_words.append(self._decode_token(current_token_id))
         # 开始判断逻辑
         if current_token_id in self._sentence_token_id_list:  # 当前是!.?其中一个
