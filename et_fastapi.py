@@ -152,8 +152,8 @@ async def llm_async(kwargs: dict = None):
     role_play = payload.pop('role_play') if 'role_play' in payload else ''
     context = payload.pop('context') if 'context' in payload else ''
     # 对context进行数字转换
-    from et_base import text_normalize
-    context = text_normalize(context, False)
+    # from et_base import text_normalize
+    # context = text_normalize(context, False)
     # 输入指令信息
     inst_text = payload.pop('inst_text') if 'inst_text' in payload else ''
     # 指定调用llm模型

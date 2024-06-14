@@ -1,3 +1,4 @@
+import os
 import re
 
 from . import symbols
@@ -61,7 +62,12 @@ def refine_syllables(syllables):
 
 # model_id = 'bert-base-uncased'
 model_id = 'dccuchile/bert-base-spanish-wwm-uncased'
-tokenizer = AutoTokenizer.from_pretrained(model_id)
+from et_dirs import melo_tts_base, model_dir_base
+model_dir = os.path.join(os.path.join(model_dir_base, os.path.basename(melo_tts_base)), f'models{os.path.sep}bert-base-spanish-wwm-uncased')
+if os.path.exists(model_dir):
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+else:
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
 
 def g2p(text, pad_start_end=True, tokenized=None):
     if tokenized is None:

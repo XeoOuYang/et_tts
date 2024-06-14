@@ -78,8 +78,8 @@ async def tts_async(text, ref_name, out_name, spc_type, et_uuid=_ET_UUID_, langu
         return ""
 
 
-async def sop_llm_tts_async(query, role_play, context, inst_text, max_num_sentence,
-                            out_name, spc_type, ref_name, et_uuid=_ET_UUID_, language="english"):
+async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_num_sentence,
+                            out_name, ref_name, tts_type, et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/llm/tts/tr"
     headers = {
         "accept": "application/json",
@@ -93,14 +93,14 @@ async def sop_llm_tts_async(query, role_play, context, inst_text, max_num_senten
             "role_play": role_play,
             "context": context,
             "inst_text": inst_text,
-            "spc_type": 'llm_glm',
+            "spc_type": llm_type,
             "max_num_sentence": max_num_sentence,
         },
         "tts_param": {
             "et_uuid": et_uuid,
             "language": language,
+            "spc_type": tts_type,
             "out_name": out_name,
-            "spc_type": spc_type,
             "ref_name": ref_name,
             "manual_seed": ref_name,
         }

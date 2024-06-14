@@ -142,7 +142,7 @@ class LLM_GLM_4(ET_LLM):
             'length_penalty': 1.5,
             # 'max_length': 4096
         }
-        self.sentence_token_list = ['!', '！', '.', '。', '?', '？', ':', '：']
+        self.sentence_token_list = ['!', '！', '.', '。', '?', '？',]
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
 
@@ -212,6 +212,8 @@ class LLM_GLM_4(ET_LLM):
         # 当不存在<|endoftext|> <|user|> <|observation|>时，就是主动停止推理，否则就是达到max_tokens停止推理
         idx = an.rfind('<|endoftext|>')
         if idx > 0: an = an[:idx]
+        idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
+        if idx > 0: an = an[:idx+1]
         an = an.replace('\n', '').strip()
         an = an.replace('<|user|>', '').strip()
         # 历史记录

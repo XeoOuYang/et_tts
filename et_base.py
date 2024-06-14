@@ -46,6 +46,21 @@ class ET_LLM(ET_BASE):
         pass
 
 
+import re
+
+def reserve_char(text):
+    # 中文: 英文
+    # \u4e00-\u9fff\u3000-\u303f\uac00-\ud7af
+    # \u0020-\u007e\u00a0-\u00ff
+    # 标点符号
+    # !"#$%&\'()+,-./:;<=>?@[\\\]^_`{|}~
+    # ！“”￥、’‘（），。：；《》？【】……——·
+    pattern = (r'[\u4e00-\u9fff\u3000-\u303f\uac00-\ud7af\u0020-\u007e\u00a0-\u00ff'
+               r'!"#$%&\'()+,-./:;<=>?@[\\\]^_`{|}~'
+               r'！“”￥、’‘（），。：；《》？【】……——·]+')
+    return ''.join(re.findall(pattern, text))
+
+
 import shutil
 import subprocess
 

@@ -243,7 +243,7 @@ class LLM_Llama_V3(ET_LLM):
             # 'max_length': 4096
         }
         # 0 means "!", # 13 means ".",# 30 means "?"
-        self.sentence_token_list = ['!', '！', '.', '。', '?', '？', ':', '：']
+        self.sentence_token_list = ['!', '！', '.', '。', '?', '？',]
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
         # # bad_words_ids
@@ -316,6 +316,8 @@ class LLM_Llama_V3(ET_LLM):
         if an == '': an = self.tokenizer.decode(outputs)
         idx = an.rfind(self.template.stop_word)
         if idx > 0: an = an[:idx]
+        idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
+        if idx > 0: an = an[:idx+1]
         an = an.replace('\n', '').strip().replace(self.template.stop_word, "").strip()
         an = an.replace('<|start_header_id|>', '').replace('assistant<|end_header_id|>', '')
         an = an.replace('>', '').strip()

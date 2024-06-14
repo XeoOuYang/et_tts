@@ -66,20 +66,22 @@ def llm(query, role_play, context, inst_text, **kwargs):
 
 
 def _post_llm_(an, max_num_sentence):
+    # 过滤不可打印字符
+    from et_base import reserve_char
+    an = reserve_char(an)
+    # 过滤不符合规范字符
     if an.startswith('.'): an = an[1:]
-    # 如果有断句限制
-    if max_num_sentence > 0:
-        arr_list = re.split(r'\.|\?|!|。|？|！', an)
-        if len(arr_list) > max_num_sentence:
-            arr_list[max_num_sentence] = ''
-            an = '.'.join(arr_list[:max_num_sentence + 1])
-    # 对llm输出文本格式化
+    # # 断句限制
+    # if max_num_sentence > 0:
+    #     arr_list = re.split(r'\.|\?|!|。|？|！', an)
+    #     if len(arr_list) > max_num_sentence:
+    #         arr_list[max_num_sentence] = ''
+    #         an = '.'.join(arr_list[:max_num_sentence + 1])
+    # 输出文本格式
     an = re.sub(r'(\.)\1+', '.', an)
     an = re.sub(r'(_)\1+', '', an)
     an = re.sub(r'\s+', ' ', an)
-    an = re.sub(r'[<>|=#&^\\/]', '', an)
-    an = re.sub(r'\*.*?\*', '', an).replace('**', '')
-    an = re.sub(r'\(.*?\)|\{.*?\}|\[.*?\]|<.*?>', '', an)
+    an = an.replace('*', '')
     return an
 
 

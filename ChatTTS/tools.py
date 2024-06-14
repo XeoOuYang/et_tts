@@ -173,7 +173,7 @@ def text_normalize(text, is_tts):
     text = replace_dollar_sign(text)
     text = replace_percentage_sign(text)
     text = replace_numeric(text)
-    if is_tts: text = insert_spaces_between_uppercase(text)
+    # if is_tts: text = insert_spaces_between_uppercase(text)
     # 连续空格
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
