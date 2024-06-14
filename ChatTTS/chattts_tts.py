@@ -88,9 +88,6 @@ class ChatTTS(ET_TTS):
         from et_base import is_english
         self._masked_indicator_en = [token_id for token, token_id in self.tokenizer.vocab.items()
                                      if is_english(token) and not is_special_token(token)]
-        # 中英文
-        for token, token_id in self.tokenizer.vocab.items():
-            print(token, token_id, is_chinese(token), is_english(token))
 
     def sample_speaker(self, manual_seed):
         from ChatTTS.spec_voices.load_voice import spec_voice
