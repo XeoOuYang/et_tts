@@ -217,8 +217,7 @@ class LanguageLogitsProcessor(LogitsProcessor):
         self._scaler_factor = scaler_factor
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
-        for _token_id in self._language_token_id_list:
-            scores[:, _token_id] *= self._scaler_factor
+        scores[:, self._language_token_id_list] = -float('inf')
         return scores
 
 

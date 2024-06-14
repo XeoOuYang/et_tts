@@ -244,8 +244,7 @@ async def tts_async_with(spc_type, text, out_path, payload: dict = None):
             if 'infer_prompt' not in _payload:
                 speed_strength = random.randint(3, 5)   # 0~9
                 _payload['infer_prompt'] = f'[speed_{speed_strength}]'
-            # 打印参数
-            print(_payload['refine_prompt'], _payload['infer_prompt'])
+            # 开始tts
             _out = tts_chat_tts(_text, ref_speaker=_ref_audio, output=_out_path, **_payload)
         return _out
     # 调用不同模型

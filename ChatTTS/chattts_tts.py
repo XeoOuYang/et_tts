@@ -119,7 +119,6 @@ class ChatTTS(ET_TTS):
         # 指定语言
         language = 'english' if 'language' not in kwargs else kwargs['language']
         language = language.lower()
-        print('language==>', language)
         # 并行推理
         wav_list = []
         from ChatTTS.tools import text_normalize, text_split, batch_split
