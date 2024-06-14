@@ -4,8 +4,8 @@ from LLM_AI.llm_llama import LLM_Llama_V3
 from LLM_AI.llm_glm import LLM_GLM_4
 
 LLM_INSTANCE = {
-    'llama_v3': LLM_Llama_V3(),
-    # 'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V6'),
+    # 'llama_v3': LLM_Llama_V3(),
+    'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V6'),
     'glm_4': LLM_GLM_4()
 }
 
@@ -67,8 +67,8 @@ def llm(query, role_play, context, inst_text, **kwargs):
 
 def _post_llm_(an, max_num_sentence):
     # 过滤不可打印字符
-    from et_base import reserve_char
-    an = reserve_char(an)
+    from et_base import reserve_char_all
+    an = reserve_char_all(an)
     # 过滤不符合规范字符
     if an.startswith('.'): an = an[1:]
     # # 断句限制

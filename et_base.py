@@ -48,17 +48,36 @@ class ET_LLM(ET_BASE):
 
 import re
 
-def reserve_char(text):
-    # 中文: 英文
+def reserve_char_all(text):
+    # 中文 + 英文
     # \u4e00-\u9fff\u3000-\u303f\uac00-\ud7af
     # \u0020-\u007e\u00a0-\u00ff
     # 标点符号
     # !"#$%&\'()+,-./:;<=>?@[\\\]^_`{|}~
-    # ！“”￥、’‘（），。：；《》？【】……——·
-    pattern = (r'[\u4e00-\u9fff\u3000-\u303f\uac00-\ud7af\u0020-\u007e\u00a0-\u00ff'
-               r'!"#$%&\'()+,-./:;<=>?@[\\\]^_`{|}~'
-               r'！“”￥、’‘（），。：；《》？【】……——·]+')
+    # ！“”#￥%&、‘’（）+，-。/：；《=》？@【\\\】…—·{|}~
+    pattern = (r'[\u4e00-\u9fff\u3000-\u303f\uac00-\ud7af'
+               r'\u0020-\u007e\u00a0-\u00ff'
+               r'!"#$%&\'()+,\-./:;<=>?@[\\\]^_`{|}~'
+               r'！“”￥、‘’（），。：；《》？【\\\】…—·]+')
     return ''.join(re.findall(pattern, text))
+
+
+def is_chinese(text):
+    # 中文
+    pattern = r'[\u4e00-\u9fff\u3000-\u303f\uac00-\ud7af]+'
+    if re.match(pattern, text):
+        return True
+    else:
+        return False
+
+
+def is_english(text):
+    # 英文
+    pattern = r'[a-zA-Z]+'
+    if re.match(pattern, text):
+        return True
+    else:
+        return False
 
 
 import shutil

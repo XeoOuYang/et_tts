@@ -169,12 +169,18 @@ def apply_character_map(text):
 
 
 def text_normalize(text, is_tts):
+    # 删除括号
+    text = re.sub(r'\(.*?\)', '', text)
+    text = re.sub(r'（.*?）', '', text)
+    # 删除标点
     text = remove_punctuation(text)
+    # 删除$, %
     text = replace_dollar_sign(text)
     text = replace_percentage_sign(text)
+    # 数字转英文
     text = replace_numeric(text)
     # if is_tts: text = insert_spaces_between_uppercase(text)
-    # 连续空格
+    # 删除连续空格
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
     return text

@@ -186,7 +186,7 @@ class SentenceStoppingCriteria(StoppingCriteria):
 
 from transformers.generation.logits_process import LogitsProcessor, LogitsProcessorList
 
-class BadWordsLogitsProcessor(LogitsProcessor):
+class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
     def __init__(self, bad_words: list[str], tokenizer):
         super().__init__()
         self._model_tokenizer = tokenizer
@@ -196,6 +196,29 @@ class BadWordsLogitsProcessor(LogitsProcessor):
         last_word = self._model_tokenizer.decode(input_ids[0][-1])
         if 'type' in last_word.lower():
             for token in self._bad_word_token_id_list: scores[:, token] = -float('inf')
+        return scores
+
+
+class SuppressSpecificBOSTokenLogitsProcessor(LogitsProcessor):
+    def __init__(self, bad_bos_token_id_list = None):
+        self.bad_bos_token_id_list = bad_bos_token_id_list
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        new_token_len = input_ids.shape[-1]
+        if new_token_len == 0:
+            for id_ in self.bad_bos_token_id_list:
+                scores[:, id_] = -float('inf')
+        return scores
+
+class LanguageLogitsProcessor(LogitsProcessor):
+    def __init__(self, language_token_id_list, scaler_factor: float=5.0):
+        super().__init__()
+        self._language_token_id_list = language_token_id_list
+        self._scaler_factor = scaler_factor
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        for _token_id in self._language_token_id_list:
+            scores[:, _token_id] *= self._scaler_factor
         return scores
 
 
@@ -216,8 +239,12 @@ class LLM_Llama_V3(ET_LLM):
         self.sentence_token_list = None
         self.history_cached = None
         # # bad_words_ids
-        self.bad_words = None
-        self.logits_processor = None
+        self.roman_numbers_list = None
+        self.forbidden_roman_numbers_logits_processor = None
+        self.suppress_specific_BOS_token_logits_processor = None
+        # 中英文控制
+        self._masked_indicator_cn = None
+        self._masked_indicator_en = None
 
     def lazy_load(self):
         self.model = load_model(self.model_path).eval()
@@ -247,12 +274,25 @@ class LLM_Llama_V3(ET_LLM):
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
         # # bad_words_ids
-        self.bad_words = [
+        self.roman_numbers_list = [
             # 罗马数字: [40, 5660, 23440, 3166, 53, 26376, 5660, 23440, 5511, 55, 84214, 5660, 23440, 3166, 53, 3166, 5660, 23440]
             " I", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X", " XI", " XII", " XIII", " XIV", " XV", " XVI", " XVII"
             " XXIV", " XXXV", " XXVII", " XXXIII",
         ]
-        self.logits_processor = LogitsProcessorList([BadWordsLogitsProcessor(self.bad_words, self.tokenizer)])
+        self.forbidden_roman_numbers_logits_processor = ForbiddenRomanNumbersLogitsProcessor(self.roman_numbers_list, self.tokenizer)
+        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':']
+        punctuation_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
+        self.suppress_specific_BOS_token_logits_processor = SuppressSpecificBOSTokenLogitsProcessor(punctuation_token_id_list)
+        # 中文
+        from et_base import is_chinese
+        self._masked_indicator_cn = [token_id for token, token_id in self.tokenizer.vocab.items() if is_chinese(token)]
+        # self._masked_indicator_cn.extend(punctuation_token_id_list)
+        self._masked_indicator_cn.extend([self.stop_token_id, self.tokenizer.eos_token_id])
+        # 英文
+        from et_base import is_english
+        self._masked_indicator_en = [token_id for token, token_id in self.tokenizer.vocab.items() if is_english(token)]
+        # self._masked_indicator_en.extend(punctuation_token_id_list)
+        self._masked_indicator_en.extend([self.stop_token_id, self.tokenizer.eos_token_id])
 
     def unload_model(self):
         if self.model:
@@ -304,7 +344,17 @@ class LLM_Llama_V3(ET_LLM):
                                                               tokenizer=self.tokenizer)
         stopping_criteria = StoppingCriteriaList()
         stopping_criteria.append(sentence_stopping_criteria)
-        outputs = self.model.generate(input_ids=input_ids, logits_processor=self.logits_processor,
+        logits_processor = LogitsProcessorList()
+        logits_processor.append(self.forbidden_roman_numbers_logits_processor)
+        logits_processor.append(self.suppress_specific_BOS_token_logits_processor)
+        language = kwargs['language'] if 'language' in kwargs else None
+        if language == 'chinese':
+            logits_processor.append(LanguageLogitsProcessor(self._masked_indicator_en, scaler_factor=0.1))
+        elif language == 'english':
+            logits_processor.append(LanguageLogitsProcessor(self._masked_indicator_cn, scaler_factor=0.1))
+        print('language =', language)
+        # 开始推理
+        outputs = self.model.generate(input_ids=input_ids, logits_processor=logits_processor,
                                       stopping_criteria=stopping_criteria, **infer_params)
         outputs = outputs.tolist()
         # print(f'len(outputs)={len(outputs)}')

@@ -103,6 +103,7 @@ async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_
             "out_name": out_name,
             "ref_name": ref_name,
             "manual_seed": ref_name,
+            "refine_prompt": "[oral_1][laugh_1][break_1]"
         }
     }
     response = await post_retry(url, headers, data)

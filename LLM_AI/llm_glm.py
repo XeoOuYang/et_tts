@@ -178,9 +178,9 @@ class LLM_GLM_4(ET_LLM):
         max_num_sentence = 3 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
         max_num_sentence = min(max(max_num_sentence, 1), 6)
         # prompt编码
-        history.insert(0, {"role": "system", "content": system})
-        history.append({"role": "user", "content": query})
-        input_ids = self.tokenizer.apply_chat_template(history, add_generation_prompt=True, tokenize=True,
+        _system_ = [{"role": "system", "content": system}]
+        _user_ = [{"role": "user", "content": query}]
+        input_ids = self.tokenizer.apply_chat_template(_system_+history+_user_, add_generation_prompt=True, tokenize=True,
                                                        return_tensors="pt", return_dict=True)
         input_ids = input_ids.to(device)
         # 调整max_new_tokens/min_new_tokens参数
@@ -217,9 +217,9 @@ class LLM_GLM_4(ET_LLM):
         an = an.replace('\n', '').strip()
         an = an.replace('<|user|>', '').strip()
         # 历史记录
-        history[-1] = {"role": 'user', 'content': query}
+        history.append({"role": 'user', 'content': query})
         history.append({"role": 'assistant', 'content': an})
-        if uuid_key is not None: self.history_cached[uuid_key] = history[1:]
+        if uuid_key is not None: self.history_cached[uuid_key] = history
         # 返回结果
         print("infer<=", an)
         return an
