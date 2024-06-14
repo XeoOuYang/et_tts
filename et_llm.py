@@ -77,8 +77,11 @@ def _post_llm_(an, max_num_sentence):
     #     if len(arr_list) > max_num_sentence:
     #         arr_list[max_num_sentence] = ''
     #         an = '.'.join(arr_list[:max_num_sentence + 1])
+    # 删除空白括号
+    an = re.sub(r'\(\s*\)', '', an)
+    an = re.sub(r'（\s*）', '', an)
     # 输出文本格式
-    an = re.sub(r'(\.)\1+', '.', an)
+    an = re.sub(r'(\.)\1+', '', an)
     an = re.sub(r'(_)\1+', '', an)
     an = re.sub(r'\s+', ' ', an)
     an = an.replace('*', '')

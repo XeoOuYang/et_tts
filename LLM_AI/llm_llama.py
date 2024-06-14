@@ -248,9 +248,9 @@ class LLM_Llama_V3(ET_LLM):
         logits_processor.append(self.suppress_specific_BOS_token_logits_processor)
         language = kwargs['language'] if 'language' in kwargs else None
         if language == 'chinese':
-            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en, scaler_factor=0.1))
+            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en))
         elif language == 'english':
-            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_cn, scaler_factor=0.1))
+            logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_cn))
         print('language =', language)
         # 开始推理
         outputs = self.model.generate(input_ids=input_ids, logits_processor=logits_processor,
