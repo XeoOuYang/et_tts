@@ -257,7 +257,7 @@ class LLM_Llama_V3(ET_LLM):
         # print(f'len(outputs)={len(outputs)}')
         outputs = outputs[0][len(input_ids[0]):]
         if sentence_stopping_criteria.last_sentence_token_idx > 0:
-            outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
+            outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx+1]
         # '<|eot_id|>'是否表示已结束？
         print(sentence_stopping_criteria.tokens_decoded_words)
         print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
