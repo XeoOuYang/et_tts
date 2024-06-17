@@ -67,11 +67,12 @@ class BadWordsLogitsProcessor(LogitsProcessor):
         self._special_token_id_list = special_token_id_list
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
-        new_token_len = input_ids.shape[-1]
-        if new_token_len > 0:
-            last_token_id = input_ids[0][-1]
-            if last_token_id in self._special_token_id_list:
-                scores[:, self._bad_words_token_id_list] = -float('inf')
+        # new_token_len = input_ids.shape[-1]
+        # if new_token_len > 0:
+        #     last_token_id = input_ids[0][-1]
+        #     if last_token_id in self._special_token_id_list:
+        #         scores[:, self._bad_words_token_id_list] = -float('inf')
+        scores[:, self._bad_words_token_id_list] = -float('inf')
         return scores
 
 
@@ -106,7 +107,7 @@ class ChatTTS(ET_TTS):
         self._masked_indicator_special = [token_id for token, token_id in self.tokenizer.vocab.items()
                                           if is_special_token(token)]
         # like, california
-        bad_words_list = ['like', 'california']
+        bad_words_list = ['like', 'california', 'io']
         def is_bad_word(text):
             for word in bad_words_list:
                 if word in text: return True

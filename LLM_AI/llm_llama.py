@@ -141,7 +141,7 @@ class LLM_Llama_V3(ET_LLM):
         # # bad_words_ids
         self._roman_token_id_list = None
         self.forbidden_roman_numbers_logits_processor = None
-        self.suppress_specific_BOS_token_logits_processor = None
+        self.forbidden_punctuations_token_logits_processor = None
         # 中英文控制
         self._masked_indicator_cn = None
         self._masked_indicator_en = None
@@ -180,12 +180,11 @@ class LLM_Llama_V3(ET_LLM):
                 return True
             else:
                 return False
-
         self._roman_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items() if is_roman(token)]
         self.forbidden_roman_numbers_logits_processor = ForbiddenRomanNumbersLogitsProcessor(self._roman_token_id_list, self.tokenizer)
         punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':']
         punctuation_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
-        self.suppress_specific_BOS_token_logits_processor = ForbiddenPunctuationsTokenLogitsProcessor(punctuation_token_id_list)
+        self.forbidden_punctuations_token_logits_processor = ForbiddenPunctuationsTokenLogitsProcessor(punctuation_token_id_list)
         # 中文
         from et_base import is_chinese
         self._masked_indicator_cn = [token_id for token, token_id in self.tokenizer.vocab.items() if is_chinese(token)]
@@ -245,7 +244,7 @@ class LLM_Llama_V3(ET_LLM):
         stopping_criteria.append(sentence_stopping_criteria)
         logits_processor = LogitsProcessorList()
         logits_processor.append(self.forbidden_roman_numbers_logits_processor)
-        logits_processor.append(self.suppress_specific_BOS_token_logits_processor)
+        logits_processor.append(self.forbidden_punctuations_token_logits_processor)
         language = kwargs['language'] if 'language' in kwargs else None
         if language == 'chinese':
             logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en))
@@ -275,5 +274,5 @@ class LLM_Llama_V3(ET_LLM):
         history.append({"role": 'assistant', 'message': an})
         if uuid_key is not None: self.history_cached[uuid_key] = history
         # 返回结果
-        print("infer<=", an)
+        print("llama_infer<=", an)
         return an

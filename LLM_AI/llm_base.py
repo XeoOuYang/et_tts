@@ -9,22 +9,21 @@ class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
         super().__init__()
         self._roman_token_id_list = roman_token_id_list
         self._model_tokenizer = tokenizer
-        self._indicator_to_set = None
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
         last_word = self._model_tokenizer.decode(input_ids[0][-1])
-        if 'type' in last_word.lower(): scores[:, self._roman_token_id_list] = -float('inf')
+        if 'type' in last_word.lower() or 'types' in last_word.lower():
+            scores[:, self._roman_token_id_list] = -float('inf')
         return scores
 
 
 class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
     def __init__(self, bad_bos_token_id_list = None):
         self.bad_bos_token_id_list = bad_bos_token_id_list
-        self._indicator_to_set = None
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         new_token_len = input_ids.shape[-1]
-        if new_token_len == 0: scores[:, self.bad_bos_token_id_list] = -float('inf')
+        if new_token_len <= 0: scores[:, self.bad_bos_token_id_list] = -float('inf')
         return scores
 
 class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
@@ -32,7 +31,6 @@ class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
         super().__init__()
         self._language_token_id_list = language_token_id_list
         self._value_to_set = value_to_set
-        self._indicator_to_set = None
 
     def adjust_token(self, token_id):
         self._language_token_id_list = [token for token in self._language_token_id_list if token != token_id]

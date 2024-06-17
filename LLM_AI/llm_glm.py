@@ -168,5 +168,5 @@ class LLM_GLM_4(ET_LLM):
         history.append({"role": 'assistant', 'content': an})
         if uuid_key is not None: self.history_cached[uuid_key] = history
         # 返回结果
-        print("infer<=", an)
+        print("glm_infer<=", an)
         return an

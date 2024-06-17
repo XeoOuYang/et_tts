@@ -67,14 +67,20 @@ def remove_punctuation(text):
     return text
 
 
-def r_strip(text: str, ref: str):
+def r_strip_en_word(text: str):
+    en_pattern = r'[a-zA-Z]+'
+    return ''.join(re.findall(en_pattern, text))
+
+
+def r_strip_en(text: str, ref: str):
     last_start = text.rfind(']')
     if len(ref) < last_start < len(text):
         last_text = text[last_start+1:]
         word_list = last_text.split()
         word_list.reverse()
         for idx, word in enumerate(word_list):
-            if word not in ref: word_list[idx] = ''
+            word = r_strip_en_word(word)
+            if f' {word}' not in ref: word_list[idx] = ''
             else: break
         # 插入空格符
         word_list.append(' ')
@@ -93,7 +99,7 @@ def normalize_infer_text(text, ref, lang='english'):
         # bad case
         text = re.sub(r']\w+\b', '] ', text)
         # 新方法
-        if len(ref) > 0: text = r_strip(text, ref)
+        if len(ref) > 0: text = r_strip_en(text, ref)
     elif lang == 'chinese':
         text = re.sub(r'（.*?）', '', text)
         # text = re.sub(r'\b[\u4e00-\u9fa5]*[a-zA-Z]+[\u4e00-\u9fa5]*\b', '', text)
@@ -108,7 +114,7 @@ def replace_dollar_sign(text):
     matches = pattern.findall(text)
     if matches:
         for match in sorted(matches, key=lambda x: len(x[0]), reverse=True):
-            text = text.replace(match[0], f'{num2words(match[1], lang="en")} dollars')
+            text = text.replace(match[0], f' {num2words(match[1], lang="en")} dollars ')
     text = text.replace('$', 'dollar')
     return text
 
@@ -118,7 +124,7 @@ def replace_percentage_sign(text):
     matches = pattern.findall(text)
     if matches:
         for match in sorted(matches, key=lambda x: len(x[0]), reverse=True):
-            text = text.replace(match[0], f'{num2words(match[1], lang="en")} percentages')
+            text = text.replace(match[0], f' {num2words(match[1], lang="en")} percentages ')
     text = text.replace('%', 'percentage')
     return text
 
@@ -259,5 +265,10 @@ if __name__ == '__main__':
     # text = "In terms of the collagen, guys, the reason this collagen supplement is so popular, if you've ever taken collagen supplements before. "
     # print(batch_split(text_split(text_normalize(text))))
 
-    text = "it's just like the all natural, [uv_break] like non gmo solution [uv_break] for women who just want to look and feel their best [uv_break] like [uv_break] like [uv_break] io"
-    print(normalize_infer_text(text, text))
+    # text = "it's just like the all natural, [uv_break] like non gmo solution [uv_break] for women who just want to look and feel their best [uv_break] like [uv_break] like [uv_break] io"
+    # print(normalize_infer_text(text, text))
+
+    ref_text = 'for our one pound bag, the price is just thirty-eight point eight dollars .'
+    infer_text = 'for our one pound bag, [laugh] the price is just thirty - eight point [uv_break] like eight dollars. '
+    print(ref_text)
+    print(r_strip_en(infer_text, ref_text))
