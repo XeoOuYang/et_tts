@@ -54,7 +54,6 @@ class SentenceStoppingCriteria(StoppingCriteria):
         self._count_num_sentence = 0
         self._stop_token_id_list = stop_token_id_list
         self._stop_word = stop_word
-        if not self._stop_token_id_list: self._stop_token_id_list = []
         self.last_sentence_token_idx = 0
         self._count_token = 0
         self.tokens_decoded_words = []
@@ -71,7 +70,7 @@ class SentenceStoppingCriteria(StoppingCriteria):
         return len(matches)
 
     def _decode_token(self, token_id):
-        return self._model_tokenizer.decode(token_id)
+        return self._model_tokenizer.decode(token_id, add_special_tokens=True)
 
     def _current_token_id(self, input_ids):
         current_token_id = input_ids[0][-1].detach().cpu().numpy()
@@ -91,7 +90,7 @@ class SentenceStoppingCriteria(StoppingCriteria):
                 self.last_sentence_token_idx = self._count_token + 1
             # 判断句子数量
             if self._count_num_sentence >= self._max_num_sentence:
-                self.reason_stop = 'max_sentence'
+                self.reason_stop = f'max_sentence_1({self._count_num_sentence})'
                 return True
         else:
             count_sentence = self._count_sentence(self.tokens_decoded_words[-1])
@@ -100,15 +99,15 @@ class SentenceStoppingCriteria(StoppingCriteria):
                 self.last_sentence_token_idx = self._count_token + 1
                 # 判断句子数量
                 if self._count_num_sentence >= self._max_num_sentence:
-                    self.reason_stop = 'max_sentence'
+                    self.reason_stop = f'max_sentence_2({self._count_num_sentence})'
                     return True
         # 判断结束符号
         if current_token_id in self._stop_token_id_list:
             self.reason_stop = 'eos_token'
             return True
-        # if self._stop_word in self.tokens_decoded_words[-1]:
-        #     self.reason_stop = 'stop_word'
-        #     return True
+        if self._stop_word in self.tokens_decoded_words[-1]:
+            self.reason_stop = 'stop_word'
+            return True
         # 计算token数量
         self._count_token += 1
         return False

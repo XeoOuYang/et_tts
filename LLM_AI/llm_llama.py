@@ -134,9 +134,10 @@ class LLM_Llama_V3(ET_LLM):
         # 采用lazy_load加载
         self.model = None
         self.tokenizer = None
-        self.stop_token_id = None
+        self.stop_token_id_list = None
         self.infer_dict = None
         self.sentence_token_list = None
+        self.dot_token_id = None
         self.history_cached = None
         # # bad_words_ids
         self._roman_token_id_list = None
@@ -152,7 +153,7 @@ class LLM_Llama_V3(ET_LLM):
             self.template.stop_word = self.tokenizer.eos_token
         stop_token_id = self.tokenizer.encode(self.template.stop_word, add_special_tokens=True)
         assert len(stop_token_id) >= 1
-        self.stop_token_id = stop_token_id[0]
+        self.stop_token_id_list = stop_token_id
         # 默认推理参数
         self.infer_dict = {
             'max_new_tokens': 256,
@@ -161,7 +162,7 @@ class LLM_Llama_V3(ET_LLM):
             'top_k': 3,
             'temperature': 0.7,
             'repetition_penalty': 1.2,
-            'eos_token_id': self.stop_token_id,
+            'eos_token_id': self.stop_token_id_list,
             'pad_token_id': self.tokenizer.eos_token_id,
             'do_sample': True,
             'no_repeat_ngram_size': 8,
@@ -169,7 +170,8 @@ class LLM_Llama_V3(ET_LLM):
             # 'max_length': 4096
         }
         # 0 means "!", # 13 means ".",# 30 means "?"
-        self.sentence_token_list = ['!', '！', '.', '。', '?', '？',]
+        self.sentence_token_list = ['!', '！', '.', '。', '?', '？']
+        self.dot_token_id = '.'
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
         def is_roman(text):
@@ -180,7 +182,7 @@ class LLM_Llama_V3(ET_LLM):
             else:
                 return False
         self._roman_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items() if is_roman(token)]
-        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':']
+        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '-']
         self._punctuations_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
         # 中文
         from et_base import is_chinese
@@ -233,8 +235,8 @@ class LLM_Llama_V3(ET_LLM):
         infer_params['min_new_tokens'] = min_new_tokens
         sentence_stopping_criteria = SentenceStoppingCriteria(max_num_sentence=max_num_sentence,
                                                               sentence_token_list=self.sentence_token_list,
-                                                              dot_token=self.sentence_token_list[1],
-                                                              stop_token_id_list=[self.stop_token_id],
+                                                              dot_token=self.dot_token_id,
+                                                              stop_token_id_list=self.stop_token_id_list,
                                                               stop_word=self.template.stop_word,
                                                               tokenizer=self.tokenizer)
         stopping_criteria = StoppingCriteriaList()
@@ -256,6 +258,8 @@ class LLM_Llama_V3(ET_LLM):
         outputs = outputs[0][len(input_ids[0]):]
         if sentence_stopping_criteria.last_sentence_token_idx > 0:
             outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
+        # '<|eot_id|>'是否表示已结束？
+        print(sentence_stopping_criteria.tokens_decoded_words)
         print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
         an = ''.join(sentence_stopping_criteria.tokens_decoded_words)
         if an == '': an = self.tokenizer.decode(outputs)
@@ -263,7 +267,7 @@ class LLM_Llama_V3(ET_LLM):
         if idx > 0: an = an[:idx]
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
         if idx > 0: an = an[:idx+1]
-        an = an.replace('\n', '.').strip().replace(self.template.stop_word, "").strip()
+        an = an.replace('\n', '').strip().replace(self.template.stop_word, "").strip()
         an = an.replace('<|start_header_id|>', '').replace('assistant<|end_header_id|>', '')
         an = an.replace('>', '').strip()
         # 历史记录

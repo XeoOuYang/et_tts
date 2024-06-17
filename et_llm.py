@@ -31,7 +31,8 @@ def llm_glm_4(query, role_play, context, inst_text, **kwargs):
         unload_model('llama_v3')
     # 加载新模型
     llm = LLM_INSTANCE['glm_4']
-    system_text = f'{role_play}\n\n{context}\n\n{inst_text}'
+    system_text = f'{role_play}\n\n{context}'
+    query = f'{inst_text}' if query == '' else f'{inst_text}\n{query}'
     an = llm.llm(query=query, system=system_text, **kwargs)
     # 对内容格式化
     max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
@@ -43,7 +44,8 @@ def llm_llama_v3(query, role_play, context, inst_text, **kwargs):
         unload_model('glm_4')
     # 加载新模型
     llm = LLM_INSTANCE['llama_v3']
-    system_text = f'{role_play}\n\n{context}\n\n{inst_text}'
+    system_text = f'{role_play}\n\n{context}'
+    query = f'{inst_text}' if query == '' else f'{inst_text}\n{query}'
     an = llm.llm(query=query, system=system_text, **kwargs)
     # 对内容格式化
     max_num_sentence = 0 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']

@@ -37,8 +37,8 @@ async def welcome():
 @app.on_event('startup')
 async def startup():
     greetings = await llm_async(kwargs={
-        'query': 'Greetings to user', 'role_play': 'You are "ET", an "AI" brain',
-        'context': 'fastapi startup', 'inst_text': 'Reply in English', 'max_num_sentence': 3
+        'query': '', 'role_play': 'You are "ET", an "AI" brain. Reply in English.', 'language': 'english',
+        'context': 'fastapi startup', 'inst_text': 'Greetings to user', 'max_num_sentence': 3
     })
     greetings = json.loads(greetings.body)['text']
     audio = await tts_async(kwargs={
@@ -53,8 +53,8 @@ async def startup():
 @app.on_event('shutdown')
 async def shutdown():
     goodbye = await llm_async(kwargs={
-        'query': 'Says goodbye to user', 'role_play': 'You are "ET", an "AI" brain',
-        'context': 'fastapi startup', 'inst_text': 'Reply in English', 'max_num_sentence': 3
+        'query': '', 'role_play': 'You are "ET", an "AI" brain. Reply in English.', 'language': 'english',
+        'context': 'fastapi startup', 'inst_text': 'Says goodbye to user', 'max_num_sentence': 3
     })
     goodbye = json.loads(goodbye.body)['text']
     audio = await tts_async(kwargs={
@@ -146,16 +146,15 @@ async def llm_async(kwargs: dict = None):
         return _an
 
     payload = kwargs.copy()
-    query = payload.pop('query') if 'query' in payload else ''
-    if query.strip().strip('\n').strip() == "":
-        raise HTTPException(status_code=400, detail="param query is empty")
     role_play = payload.pop('role_play') if 'role_play' in payload else ''
     context = payload.pop('context') if 'context' in payload else ''
-    # 对context进行数字转换
-    # from et_base import text_normalize
-    # context = text_normalize(context, False)
     # 输入指令信息
+    query = payload.pop('query') if 'query' in payload else ''
+    query = query.strip('\n').strip()
     inst_text = payload.pop('inst_text') if 'inst_text' in payload else ''
+    inst_text = inst_text.strip('\n').strip()
+    if query == "" and inst_text == "":
+        raise HTTPException(status_code=400, detail="neither param query or param inst_text should be assigned")
     # 指定调用llm模型
     spc_type = payload.pop('spc_type') if 'spc_type' in payload else 'llm_llama'
     # 参数normalize
