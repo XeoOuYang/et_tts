@@ -182,7 +182,7 @@ class LLM_Llama_V3(ET_LLM):
             else:
                 return False
         self._roman_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items() if is_roman(token)]
-        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '-']
+        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '{(', ')}', '{{', '}}']
         self._punctuations_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
         # 中文
         from et_base import is_chinese
@@ -256,8 +256,8 @@ class LLM_Llama_V3(ET_LLM):
         outputs = outputs.tolist()
         # print(f'len(outputs)={len(outputs)}')
         outputs = outputs[0][len(input_ids[0]):]
-        if sentence_stopping_criteria.last_sentence_token_idx > 0:
-            outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx+1]
+        # if sentence_stopping_criteria.last_sentence_token_idx > 0:
+        #     outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx+1]
         # '<|eot_id|>'是否表示已结束？
         print(sentence_stopping_criteria.tokens_decoded_words)
         print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
@@ -265,8 +265,14 @@ class LLM_Llama_V3(ET_LLM):
         if an == '': an = self.tokenizer.decode(outputs)
         idx = an.rfind(self.template.stop_word)
         if idx > 0: an = an[:idx]
+        # 句子结束符号
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
-        if idx > 0: an = an[:idx+1]
+        # 大括号结束标志
+        brace_idx = an.find('}')
+        if brace_idx > 0:
+            an = an[:brace_idx+1]
+        elif idx > 0:
+            an = an[:idx+1]
         an = an.replace('\n', '').strip().replace(self.template.stop_word, "").strip()
         an = an.replace('<|start_header_id|>', '').replace('assistant<|end_header_id|>', '')
         an = an.replace('>', '').strip()

@@ -54,7 +54,6 @@ class SentenceStoppingCriteria(StoppingCriteria):
         self._count_num_sentence = 0
         self._stop_token_id_list = stop_token_id_list
         self._stop_word = stop_word
-        self.last_sentence_token_idx = 0
         self._count_token = 0
         self.tokens_decoded_words = []
         # 过滤bad cases
@@ -84,10 +83,8 @@ class SentenceStoppingCriteria(StoppingCriteria):
             if current_token_id == self._dot_token_id:  # 处理小数点
                 if not str.isdigit(self.tokens_decoded_words[-2]):
                     self._count_num_sentence += 1
-                    self.last_sentence_token_idx = self._count_token + 1
             else:  # 其他情况
                 self._count_num_sentence += 1
-                self.last_sentence_token_idx = self._count_token + 1
             # 判断句子数量
             if self._count_num_sentence >= self._max_num_sentence:
                 self.reason_stop = f'max_sentence_1({self._count_num_sentence})'
@@ -96,7 +93,6 @@ class SentenceStoppingCriteria(StoppingCriteria):
             count_sentence = self._count_sentence(self.tokens_decoded_words[-1])
             if count_sentence > 0:
                 self._count_num_sentence += count_sentence
-                self.last_sentence_token_idx = self._count_token + 1
                 # 判断句子数量
                 if self._count_num_sentence >= self._max_num_sentence:
                     self.reason_stop = f'max_sentence_2({self._count_num_sentence})'

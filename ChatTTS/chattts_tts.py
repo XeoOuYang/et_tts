@@ -282,7 +282,7 @@ if __name__ == '__main__':
     with open('text.txt', 'r', encoding='utf8', errors='ignore') as fd:
         text = fd.read()
     # 本地测试
-    tts = ChatTTS(manual_seed=414)
+    tts = ChatTTS(manual_seed=410)
     manual_seed = tts.manual_seed
     # # 随机测试
     for idx in range(1):

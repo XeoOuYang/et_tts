@@ -150,8 +150,8 @@ class LLM_GLM_4(ET_LLM):
         stopping_criteria.append(sentence_stopping_criteria)
         outputs = self.model.generate(**input_ids, stopping_criteria=stopping_criteria, **infer_params)
         outputs = outputs[:, input_ids['input_ids'].shape[1]:]
-        if sentence_stopping_criteria.last_sentence_token_idx > 0:
-            outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
+        # if sentence_stopping_criteria.last_sentence_token_idx > 0:
+        #     outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
         print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
         an = ''.join(sentence_stopping_criteria.tokens_decoded_words)
         if an == '': an = self.tokenizer.decode(outputs[0], skip_special_tokens=False)
@@ -159,9 +159,15 @@ class LLM_GLM_4(ET_LLM):
         # 当不存在<|endoftext|> <|user|> <|observation|>时，就是主动停止推理，否则就是达到max_tokens停止推理
         idx = an.rfind('<|endoftext|>')
         if idx > 0: an = an[:idx]
+        # 句子结束符号
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
-        if idx > 0: an = an[:idx+1]
-        an = an.replace('\n', '.').strip()
+        # 大括号结束标志
+        brace_idx = an.find('}')
+        if brace_idx > 0:
+            an = an[:brace_idx + 1]
+        elif idx > 0:
+            an = an[:idx + 1]
+        an = an.replace('\n', '').strip()
         an = an.replace('<|user|>', '').strip()
         # 历史记录
         history.append({"role": 'user', 'content': query})
