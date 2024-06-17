@@ -91,10 +91,7 @@ def normalize_infer_text(text, ref, lang='english'):
         adjust_pattern = re.compile(r'\b[a-zA-Z]*[\u4e00-\u9fa5]+[a-zA-Z]*\b')
         text = re.sub(adjust_pattern, '', text)
         # bad case
-        # text = re.sub(r'](.*?)\s+california\b', '] ', text)
-        # text = re.sub(r']\w+\b', '] ', text)
-        # text = re.sub(r']\s+(tan|io|so|p)\b', '] ', text)
-        # text = re.sub(r']\s+like\s*(p|io)?\b', '] ', text)
+        text = re.sub(r']\w+\b', '] ', text)
         # 新方法
         if len(ref) > 0: text = r_strip(text, ref)
     elif lang == 'chinese':
