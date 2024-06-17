@@ -19,11 +19,11 @@ class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
 
 class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
     def __init__(self, bad_bos_token_id_list = None):
-        self.bad_bos_token_id_list = bad_bos_token_id_list
+        self._bad_bos_token_id_list = bad_bos_token_id_list
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         new_token_len = input_ids.shape[-1]
-        if new_token_len <= 0: scores[:, self.bad_bos_token_id_list] = -float('inf')
+        if new_token_len <= 0: scores[:, self._bad_bos_token_id_list] = -float('inf')
         return scores
 
 class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
