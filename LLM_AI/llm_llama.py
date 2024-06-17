@@ -267,7 +267,7 @@ class LLM_Llama_V3(ET_LLM):
         if idx > 0: an = an[:idx]
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
         if idx > 0: an = an[:idx+1]
-        an = an.replace('\n', '').strip().replace(self.template.stop_word, "").strip()
+        an = an.replace('\n', '.').strip().replace(self.template.stop_word, "").strip()
         an = an.replace('<|start_header_id|>', '').replace('assistant<|end_header_id|>', '')
         an = an.replace('>', '').strip()
         # 历史记录

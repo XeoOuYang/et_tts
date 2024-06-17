@@ -67,16 +67,36 @@ def remove_punctuation(text):
     return text
 
 
-def normalize_infer_text(text, lang='english'):
+def r_strip(text: str, ref: str):
+    last_start = text.rfind(']')
+    if len(ref) < last_start < len(text):
+        last_text = text[last_start+1:]
+        word_list = last_text.split()
+        word_list.reverse()
+        for idx, word in enumerate(word_list):
+            if word.strip() not in ref: word_list[idx] = ''
+            else: break
+        # 插入空格符
+        word_list.append(' ')
+        word_list.reverse()
+        # 返回删除后格式
+        return text[:last_start+1] + ' '.join(word_list)
+    # 返回原型
+    return text
+
+
+def normalize_infer_text(text, ref, lang='english'):
     if lang == 'english':
         # 中文汉字
         adjust_pattern = re.compile(r'\b[a-zA-Z]*[\u4e00-\u9fa5]+[a-zA-Z]*\b')
         text = re.sub(adjust_pattern, '', text)
         # bad case
-        text = re.sub(r'](.*?)\s+california\b', '] ', text)
-        text = re.sub(r']\w+\b', '] ', text)
-        text = re.sub(r']\s+(tan|io|so|p)\b', '] ', text)
-        text = re.sub(r']\s+like\s*(p|io)?\b', '] ', text)
+        # text = re.sub(r'](.*?)\s+california\b', '] ', text)
+        # text = re.sub(r']\w+\b', '] ', text)
+        # text = re.sub(r']\s+(tan|io|so|p)\b', '] ', text)
+        # text = re.sub(r']\s+like\s*(p|io)?\b', '] ', text)
+        # 新方法
+        if len(ref) > 0: text = r_strip(text, ref)
     elif lang == 'chinese':
         text = re.sub(r'（.*?）', '', text)
         # text = re.sub(r'\b[\u4e00-\u9fa5]*[a-zA-Z]+[\u4e00-\u9fa5]*\b', '', text)
@@ -243,4 +263,4 @@ if __name__ == '__main__':
     # print(batch_split(text_split(text_normalize(text))))
 
     text = "it's just like the all natural, [uv_break] like non gmo solution [uv_break] for women who just want to look and feel their best [uv_break] like [uv_break] like [uv_break] io"
-    print(normalize_infer_text(text))
+    print(normalize_infer_text(text, text))

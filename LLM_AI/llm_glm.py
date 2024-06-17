@@ -161,7 +161,7 @@ class LLM_GLM_4(ET_LLM):
         if idx > 0: an = an[:idx]
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
         if idx > 0: an = an[:idx+1]
-        an = an.replace('\n', '').strip()
+        an = an.replace('\n', '.').strip()
         an = an.replace('<|user|>', '').strip()
         # 历史记录
         history.append({"role": 'user', 'content': query})

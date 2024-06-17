@@ -162,7 +162,7 @@ class ChatTTS(ET_TTS):
             # 判断ratio返回结果
             from ChatTTS.tools import normalize_infer_text
             if ratio > 0.5:
-                return normalize_infer_text(_new, language)
+                return normalize_infer_text(_new, _old, language)
             else:
                 return _old
         with SeedContext(manual_seed, True):
