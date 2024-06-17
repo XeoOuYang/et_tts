@@ -141,8 +141,6 @@ class Chat:
         else:
             if isinstance(text, str):
                 text = [text]
-            if normalize_infer_text:
-                text = [normalize_infer_text(_old, _old) for _old in text]
         # 根据参数返回
         if refine_text_only:
             return text

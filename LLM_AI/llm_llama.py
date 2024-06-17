@@ -224,7 +224,7 @@ class LLM_Llama_V3(ET_LLM):
         self.tokenizer.encode(query, add_special_tokens=True)
         # 最大句子数限制
         max_num_sentence = 3 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
-        max_num_sentence = min(max(max_num_sentence, 1), 6)
+        max_num_sentence = max(max_num_sentence, 1)
         # prompt编码
         input_ids, qa_ids_tokens = build_prompt(self.tokenizer, self.template, query=query,
                                                 system=system, history=history)
@@ -260,7 +260,7 @@ class LLM_Llama_V3(ET_LLM):
         outputs = outputs[0][len(input_ids[0]):]
         if sentence_stopping_criteria.last_sentence_token_idx > 0:
             outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
-        print('reason_stop ==>', sentence_stopping_criteria.reason_stop)
+        print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
         an = ''.join(sentence_stopping_criteria.tokens_decoded_words)
         if an == '': an = self.tokenizer.decode(outputs)
         idx = an.rfind(self.template.stop_word)

@@ -37,12 +37,12 @@ async def welcome():
 @app.on_event('startup')
 async def startup():
     greetings = await llm_async(kwargs={
-        'query': 'Greetings to user', 'role_play': 'You are ET, an AI brain',
+        'query': 'Greetings to user', 'role_play': 'You are "ET", an "AI" brain',
         'context': 'fastapi startup', 'inst_text': 'Reply in English', 'max_num_sentence': 3
     })
     greetings = json.loads(greetings.body)['text']
     audio = await tts_async(kwargs={
-        'text': greetings, 'out_name': 'fastapi_startup', 'spc_type': 'chat_tts', 'ref_name': '8', 'manual_seed': 8,
+        'text': greetings, 'out_name': 'fastapi_startup', 'spc_type': 'chat_tts', 'ref_name': '8', 'manual_seed': 8, "skip_refine_text": True
     })
     audio = json.loads(audio.body)['path']
     # 预热模型
@@ -53,12 +53,12 @@ async def startup():
 @app.on_event('shutdown')
 async def shutdown():
     goodbye = await llm_async(kwargs={
-        'query': 'Says goodbye to user', 'role_play': 'You are ET, an AI brain',
+        'query': 'Says goodbye to user', 'role_play': 'You are "ET", an "AI" brain',
         'context': 'fastapi startup', 'inst_text': 'Reply in English', 'max_num_sentence': 3
     })
     goodbye = json.loads(goodbye.body)['text']
     audio = await tts_async(kwargs={
-        'text': goodbye, 'out_name': 'fastapi_shutdown', 'spc_type': 'chat_tts', 'ref_name': '8', 'manual_seed': 8,
+        'text': goodbye, 'out_name': 'fastapi_shutdown', 'spc_type': 'chat_tts', 'ref_name': '8', 'manual_seed': 8, "skip_refine_text": True
     })
     audio = json.loads(audio.body)['path']
     # 销毁缓存

@@ -123,7 +123,7 @@ class LLM_GLM_4(ET_LLM):
                 if k in kwargs: infer_params[k] = kwargs[k]
         # 最大句子数限制
         max_num_sentence = 3 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
-        max_num_sentence = min(max(max_num_sentence, 1), 6)
+        max_num_sentence = max(max_num_sentence, 1)
         # prompt编码
         _system_ = [{"role": "system", "content": system}]
         _user_ = [{"role": "user", "content": query}]
@@ -152,7 +152,7 @@ class LLM_GLM_4(ET_LLM):
         outputs = outputs[:, input_ids['input_ids'].shape[1]:]
         if sentence_stopping_criteria.last_sentence_token_idx > 0:
             outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
-        print('reason_stop ==>', sentence_stopping_criteria.reason_stop)
+        print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
         an = ''.join(sentence_stopping_criteria.tokens_decoded_words)
         if an == '': an = self.tokenizer.decode(outputs[0], skip_special_tokens=False)
         an = an.strip().strip('\n')
