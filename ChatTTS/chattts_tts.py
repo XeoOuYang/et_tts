@@ -167,9 +167,9 @@ class ChatTTS(ET_TTS):
                 return _old
         with SeedContext(manual_seed, True):
             for batch in batch_split(text_split(text_normalize(text, True), language)):
-                wav_arr = self.model.infer(batch, params_infer_code=params_infer_code, extra_refine_logits=logits_processor,
-                                           normalize_infer_text=post_infer_text, params_refine_text=params_refine_text,
-                                           skip_refine_text=skip_refine_text, use_decoder=True)
+                wav_arr = self.model.infer(batch, skip_refine_text=skip_refine_text, params_refine_text=params_refine_text,
+                                           normalize_infer_text=post_infer_text, params_infer_code=params_infer_code, use_decoder=True,
+                                           extra_refine_logits=logits_processor)
                 wav_list.extend(wav_arr)
                 clear_cuda_cache()
         wav_path = f'{self.output_dir}{os.path.sep}tmp.wav'

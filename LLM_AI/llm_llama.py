@@ -5,7 +5,7 @@ import re
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, StoppingCriteriaList
 
-from LLM_AI.llm_base import ForbiddenRomanNumbersLogitsProcessor, SuppressSpecificBOSTokenLogitsProcessor, ForceTokenFixValueLogitsProcessor, \
+from LLM_AI.llm_base import ForbiddenRomanNumbersLogitsProcessor, ForbiddenPunctuationsTokenLogitsProcessor, ForceTokenFixValueLogitsProcessor, \
     SentenceStoppingCriteria
 from et_base import check_multi_head_attention
 from dataclasses import dataclass
@@ -139,7 +139,7 @@ class LLM_Llama_V3(ET_LLM):
         self.sentence_token_list = None
         self.history_cached = None
         # # bad_words_ids
-        self.roman_numbers_list = None
+        self._roman_token_id_list = None
         self.forbidden_roman_numbers_logits_processor = None
         self.suppress_specific_BOS_token_logits_processor = None
         # 中英文控制
@@ -173,15 +173,19 @@ class LLM_Llama_V3(ET_LLM):
         self.sentence_token_list = ['!', '！', '.', '。', '?', '？',]
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
-        # 罗马数字: [40, 5660, 23440, 3166, 53, 26376, 5660, 23440, 5511, 55, 84214, 5660, 23440, 3166, 53, 3166, 5660, 23440]
-        self.roman_numbers_list = [
-            " I", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X", " XI", " XII", " XIII", " XIV", " XV", " XVI", " XVII"
-            " XXIV", " XXXV", " XXVII", " XXXIII",
-        ]
-        self.forbidden_roman_numbers_logits_processor = ForbiddenRomanNumbersLogitsProcessor(self.roman_numbers_list, self.tokenizer)
+        def is_roman(text):
+            # 适配999以下罗马数字
+            pattern = r'^(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$'
+            if len(re.findall(pattern, text)) > 0:
+                return True
+            else:
+                return False
+
+        self._roman_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items() if is_roman(token)]
+        self.forbidden_roman_numbers_logits_processor = ForbiddenRomanNumbersLogitsProcessor(self._roman_token_id_list, self.tokenizer)
         punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':']
         punctuation_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
-        self.suppress_specific_BOS_token_logits_processor = SuppressSpecificBOSTokenLogitsProcessor(punctuation_token_id_list)
+        self.suppress_specific_BOS_token_logits_processor = ForbiddenPunctuationsTokenLogitsProcessor(punctuation_token_id_list)
         # 中文
         from et_base import is_chinese
         self._masked_indicator_cn = [token_id for token, token_id in self.tokenizer.vocab.items() if is_chinese(token)]

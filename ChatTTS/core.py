@@ -122,13 +122,12 @@ class Chat:
         self, 
         text, 
         skip_refine_text=False, 
-        refine_text_only=False,
+        params_refine_text={},
         normalize_infer_text=None,
-        params_refine_text={}, 
-        params_infer_code={}, 
+        refine_text_only=False,
+        params_infer_code={},
         use_decoder=False,
         extra_refine_logits=None,
-        extra_infer_logits=None
     ):
         
         assert self.check_model(use_decoder=use_decoder)
@@ -139,20 +138,20 @@ class Chat:
             text = self.pretrain_models['tokenizer'].batch_decode(text_tokens)
             if normalize_infer_text:
                 text = [normalize_infer_text(_old, _new) for _old, _new in zip(old_text, text)]
-            if refine_text_only:
-                return text
         else:
             if isinstance(text, str):
                 text = [text]
             if normalize_infer_text:
                 text = [normalize_infer_text(_old, _old) for _old in text]
-            if refine_text_only:
-                return text
+        # 根据参数返回
+        if refine_text_only:
+            return text
 
         print('batch<====', text)
-        text = [params_infer_code.get('prompt', '') + i for i in text]
-        params_infer_code.pop('prompt', '')
-        result = infer_code(self.pretrain_models, text, extra_infer_logits=extra_infer_logits, **params_infer_code, return_hidden=use_decoder)
+        prompt = params_infer_code.pop('prompt', '')
+        if prompt is not None and prompt != '':
+            text = [params_infer_code.get('prompt', '') + i for i in text]
+        result = infer_code(self.pretrain_models, text, **params_infer_code, return_hidden=use_decoder)
 
         if use_decoder:
             mel_spec = [self.pretrain_models['decoder'](i[None].permute(0,2,1)) for i in result['hiddens']]
