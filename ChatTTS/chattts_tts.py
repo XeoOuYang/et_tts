@@ -67,13 +67,9 @@ class BadWordsLogitsProcessor(LogitsProcessor):
         self._special_token_id_list = special_token_id_list
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
-        # new_token_len = input_ids.shape[-1]
-        # if new_token_len > 0:
-        #     last_token_id = input_ids[0][-1]
-        #     if last_token_id in self._special_token_id_list:
-        #         scores[:, self._bad_words_token_id_list] = -float('inf')
-        scores[:, self._bad_words_token_id_list] = -float('inf')
-        return scores
+        processed_scores = scores.clone()
+        processed_scores[:, self._bad_words_token_id_list] = -float('inf')
+        return processed_scores
 
 
 class ChatTTS(ET_TTS):

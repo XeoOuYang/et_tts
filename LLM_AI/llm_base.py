@@ -13,8 +13,11 @@ class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
         last_word = self._model_tokenizer.decode(input_ids[0][-1])
         if 'type' in last_word.lower() or 'types' in last_word.lower():
-            scores[:, self._roman_token_id_list] = -float('inf')
-        return scores
+            processed_scores = scores.clone()
+            processed_scores[:, self._roman_token_id_list] = -float('inf')
+            return processed_scores
+        else:
+            return scores
 
 
 class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
@@ -23,8 +26,12 @@ class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         new_token_len = input_ids.shape[-1]
-        if new_token_len <= 0: scores[:, self._bad_bos_token_id_list] = -float('inf')
-        return scores
+        if new_token_len <= 0:
+            processed_scores = scores.clone()
+            processed_scores[:, self._bad_bos_token_id_list] = -float('inf')
+            return processed_scores
+        else:
+            return scores
 
 class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
     def __init__(self, language_token_id_list, value_to_set: float=-float('inf')):
@@ -32,12 +39,10 @@ class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
         self._language_token_id_list = language_token_id_list
         self._value_to_set = value_to_set
 
-    def adjust_token(self, token_id):
-        self._language_token_id_list = [token for token in self._language_token_id_list if token != token_id]
-
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
-        scores[:, self._language_token_id_list] = self._value_to_set
-        return scores
+        processed_scores = scores.clone()
+        processed_scores[:, self._language_token_id_list] = self._value_to_set
+        return processed_scores
 
 
 class SentenceStoppingCriteria(StoppingCriteria):
@@ -101,9 +106,9 @@ class SentenceStoppingCriteria(StoppingCriteria):
         if current_token_id in self._stop_token_id_list:
             self.reason_stop = 'eos_token'
             return True
-        if self._stop_word in self.tokens_decoded_words[-1]:
-            self.reason_stop = 'stop_word'
-            return True
+        # if self._stop_word in self.tokens_decoded_words[-1]:
+        #     self.reason_stop = 'stop_word'
+        #     return True
         # 计算token数量
         self._count_token += 1
         return False
