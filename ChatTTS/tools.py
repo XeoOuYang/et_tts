@@ -74,7 +74,7 @@ def r_strip(text: str, ref: str):
         word_list = last_text.split()
         word_list.reverse()
         for idx, word in enumerate(word_list):
-            if word.strip() not in ref: word_list[idx] = ''
+            if word not in ref: word_list[idx] = ''
             else: break
         # 插入空格符
         word_list.append(' ')

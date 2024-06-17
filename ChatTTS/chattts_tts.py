@@ -6,7 +6,7 @@ import shutil
 import numpy
 
 import torch
-from transformers import LogitsProcessorList
+from transformers import LogitsProcessor, LogitsProcessorList
 
 from LLM_AI.llm_base import ForceTokenFixValueLogitsProcessor
 
@@ -61,6 +61,20 @@ def clear_cuda_cache():
     torch.cuda.empty_cache()
 
 
+class BadWordsLogitsProcessor(LogitsProcessor):
+    def __init__(self, bad_words_token_id_list, special_token_id_list):
+        self._bad_words_token_id_list = bad_words_token_id_list
+        self._special_token_id_list = special_token_id_list
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        new_token_len = input_ids.shape[-1]
+        if new_token_len > 0:
+            last_token_id = input_ids[0][-1]
+            if last_token_id in self._special_token_id_list:
+                scores[:, self._bad_words_token_id_list] = -float('inf')
+        return scores
+
+
 class ChatTTS(ET_TTS):
     def __init__(self, manual_seed: int = 5656, refine_text=True):
         super().__init__()
@@ -88,6 +102,18 @@ class ChatTTS(ET_TTS):
         from et_base import is_english
         self._masked_indicator_en = [token_id for token, token_id in self.tokenizer.vocab.items()
                                      if is_english(token) and not is_special_token(token)]
+        # 特殊符号
+        self._masked_indicator_special = [token_id for token, token_id in self.tokenizer.vocab.items()
+                                          if is_special_token(token)]
+        # like, california
+        bad_words_list = ['like', 'california']
+        def is_bad_word(text):
+            for word in bad_words_list:
+                if word in text: return True
+            return False
+        bad_words_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items()
+                                   if is_bad_word(token) and not is_special_token(token)]
+        self.bad_word_logits_processor = BadWordsLogitsProcessor(bad_words_token_id_list, self._masked_indicator_special)
 
     def sample_speaker(self, manual_seed):
         from ChatTTS.spec_voices.load_voice import spec_voice
@@ -165,11 +191,15 @@ class ChatTTS(ET_TTS):
                 return normalize_infer_text(_new, _old, language)
             else:
                 return _old
+        # 降低[uv_break]后like等词汇出现概率
+        logits_processor_list = LogitsProcessorList([self.bad_word_logits_processor])
+        if logits_processor is not None:
+            logits_processor_list.append(logits_processor)
         with SeedContext(manual_seed, True):
             for batch in batch_split(text_split(text_normalize(text, True), language)):
                 wav_arr = self.model.infer(batch, skip_refine_text=skip_refine_text, params_refine_text=params_refine_text,
                                            normalize_infer_text=post_infer_text, params_infer_code=params_infer_code, use_decoder=True,
-                                           extra_refine_logits=logits_processor)
+                                           extra_refine_logits=logits_processor_list)
                 wav_list.extend(wav_arr)
                 clear_cuda_cache()
         wav_path = f'{self.output_dir}{os.path.sep}tmp.wav'
