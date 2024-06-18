@@ -20,7 +20,7 @@ class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
             return scores
 
 
-class ForbiddenFollowingCharacterLogitsProcessor(LogitsProcessor):
+class ForbiddenFollowingTokenLogitsProcessor(LogitsProcessor):
     def __init__(self, rule_dict: dict[str, list[int]], tokenizer):
         self._rule_dict = rule_dict
         self._model_tokenizer = tokenizer
@@ -33,7 +33,7 @@ class ForbiddenFollowingCharacterLogitsProcessor(LogitsProcessor):
         return processed_scores
 
 
-class EncourageFollowingCharacterLogitsProcessor(LogitsProcessor):
+class EncourageFollowingTokenLogitsProcessor(LogitsProcessor):
     def __init__(self, rule_dict: dict[str, list[int]], tokenizer, factor: float=2.0):
         self._rule_dict = rule_dict
         self._model_tokenizer = tokenizer
@@ -47,7 +47,7 @@ class EncourageFollowingCharacterLogitsProcessor(LogitsProcessor):
         return processed_scores
 
 
-class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
+class ForbiddenLeadingPunctuationsLogitsProcessor(LogitsProcessor):
     def __init__(self, bad_bos_token_id_list, start_ids_length):
         self._bad_bos_token_id_list = [token_id for token_id in bad_bos_token_id_list if token_id is not None]
         self._start_ids_length = start_ids_length
@@ -62,7 +62,7 @@ class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
             return scores
 
 class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
-    def __init__(self, language_token_id_list, value_to_set: float=-float('inf')):
+    def __init__(self, language_token_id_list, value_to_set=-float('inf')):
         super().__init__()
         self._language_token_id_list = language_token_id_list
         self._value_to_set = value_to_set

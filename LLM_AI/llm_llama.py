@@ -5,8 +5,8 @@ import re
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, StoppingCriteriaList
 
-from LLM_AI.llm_base import ForbiddenRomanNumbersLogitsProcessor, ForbiddenPunctuationsTokenLogitsProcessor, ForceTokenFixValueLogitsProcessor, \
-    SentenceStoppingCriteria, ForbiddenFollowingCharacterLogitsProcessor, EncourageFollowingCharacterLogitsProcessor
+from LLM_AI.llm_base import ForbiddenRomanNumbersLogitsProcessor, ForbiddenLeadingPunctuationsLogitsProcessor, ForceTokenFixValueLogitsProcessor, \
+    SentenceStoppingCriteria, ForbiddenFollowingTokenLogitsProcessor, EncourageFollowingTokenLogitsProcessor
 from et_base import check_multi_head_attention
 from dataclasses import dataclass
 from typing import Dict
@@ -245,12 +245,12 @@ class LLM_Llama_V3(ET_LLM):
         stopping_criteria.append(sentence_stopping_criteria)
         logits_processor = LogitsProcessorList()
         # logits_processor.append(ForbiddenRomanNumbersLogitsProcessor(self._roman_token_id_list, self.tokenizer))
-        logits_processor.append(ForbiddenPunctuationsTokenLogitsProcessor(self._punctuations_token_id_list, len(input_ids[0])))
-        logits_processor.append(ForbiddenFollowingCharacterLogitsProcessor({
+        logits_processor.append(ForbiddenLeadingPunctuationsLogitsProcessor(self._punctuations_token_id_list, len(input_ids[0])))
+        logits_processor.append(ForbiddenFollowingTokenLogitsProcessor({
             ':': self.tokenizer.convert_tokens_to_ids(['}']),
             'type': self._roman_token_id_list,
         }, self.tokenizer))
-        logits_processor.append(EncourageFollowingCharacterLogitsProcessor({
+        logits_processor.append(EncourageFollowingTokenLogitsProcessor({
             '}': self.stop_token_id_list,
         }, self.tokenizer, factor=5.0))
         language = kwargs['language'] if 'language' in kwargs else None
