@@ -129,12 +129,12 @@ def replace_percentage_sign(text):
     return text
 
 
-def replace_numeric(text):
+def replace_numeric(text, lang='en'):
     pattern = re.compile(r'((\d+)(\.\d{2})?)')
     matches = pattern.findall(text)
     if matches:
         for match in sorted(matches, key=lambda x: len(x[0]), reverse=True):
-            text = text.replace(match[0], f'{num2words(match[0], lang="en")} ')
+            text = text.replace(match[0], f'{num2words(match[0], lang=lang)} ')
     text = re.sub(r'[\b]+', ' ', text)
     return text
 
@@ -191,7 +191,7 @@ def apply_character_map(text):
     return text.translate(translation_table)
 
 
-def text_normalize(text, is_tts):
+def text_normalize(text, is_tts, language='english'):
     # 删除括号
     text = re.sub(r'\(.*?\)', '', text)
     text = re.sub(r'（.*?）', '', text)
@@ -201,7 +201,10 @@ def text_normalize(text, is_tts):
     text = replace_dollar_sign(text)
     text = replace_percentage_sign(text)
     # 数字转英文
-    text = replace_numeric(text)
+    if language == 'english':
+        text = replace_numeric(text, 'en')
+    elif language == 'chinese':
+        pass
     # if is_tts: text = insert_spaces_between_uppercase(text)
     # 删除连续空格
     text = re.sub(r'\s+', ' ', text)

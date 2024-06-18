@@ -193,7 +193,7 @@ class ChatTTS(ET_TTS):
         if logits_processor is not None:
             logits_processor_list.append(logits_processor)
         with SeedContext(manual_seed, True):
-            for batch in batch_split(text_split(text_normalize(text, True), language)):
+            for batch in batch_split(text_split(text_normalize(text, True, language), language)):
                 wav_arr = self.model.infer(batch, skip_refine_text=skip_refine_text, params_refine_text=params_refine_text,
                                            normalize_infer_text=post_infer_text, params_infer_code=params_infer_code, use_decoder=True,
                                            extra_refine_logits=logits_processor_list)

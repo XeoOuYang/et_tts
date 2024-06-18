@@ -30,6 +30,7 @@ async def llm_async(query, role_play, context, inst_text, max_num_sentence, repe
     data = {
         "et_uuid": et_uuid,
         "language": language,
+        "use_history": False,
         "query": query,
         "role_play": role_play,
         "context": context,
@@ -89,6 +90,7 @@ async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_
         "llm_param": {
             "et_uuid": et_uuid,
             "language": language,
+            "use_history": True,
             "query": query,
             "role_play": role_play,
             "context": context,
