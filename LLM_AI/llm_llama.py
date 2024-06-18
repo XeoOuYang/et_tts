@@ -6,7 +6,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, StoppingCriteriaList
 
 from LLM_AI.llm_base import ForbiddenRomanNumbersLogitsProcessor, ForbiddenPunctuationsTokenLogitsProcessor, ForceTokenFixValueLogitsProcessor, \
-    SentenceStoppingCriteria, ForbiddenFollowingCharacterLogitsProcessor
+    SentenceStoppingCriteria, ForbiddenFollowingCharacterLogitsProcessor, EncourageFollowingCharacterLogitsProcessor
 from et_base import check_multi_head_attention
 from dataclasses import dataclass
 from typing import Dict
@@ -250,6 +250,9 @@ class LLM_Llama_V3(ET_LLM):
             ':': self.tokenizer.convert_tokens_to_ids(['}']),
             'type': self._roman_token_id_list,
         }, self.tokenizer))
+        logits_processor.append(EncourageFollowingCharacterLogitsProcessor({
+            '}': self.stop_token_id_list,
+        }, self.tokenizer, factor=5.0))
         language = kwargs['language'] if 'language' in kwargs else None
         if language == 'chinese':
             logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en))

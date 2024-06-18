@@ -33,6 +33,19 @@ class ForbiddenFollowingCharacterLogitsProcessor(LogitsProcessor):
         return processed_scores
 
 
+class EncourageFollowingCharacterLogitsProcessor(LogitsProcessor):
+    def __init__(self, rule_dict: dict[str, list[int]], tokenizer, factor: float=2.0):
+        self._rule_dict = rule_dict
+        self._model_tokenizer = tokenizer
+        self._factor = factor
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        last_word = self._model_tokenizer.decode(input_ids[0][-1]).lower()
+        processed_scores = scores.clone()
+        for key, value in self._rule_dict.items():
+            if key in last_word: processed_scores[:, value] *= self._factor
+        return processed_scores
+
 
 class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
     def __init__(self, bad_bos_token_id_list, start_ids_length):

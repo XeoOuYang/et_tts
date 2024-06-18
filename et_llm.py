@@ -7,6 +7,7 @@ LLM_INSTANCE = {
     'llama_v3': LLM_Llama_V3(),
     # 'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V10'),
     # 'llama_v3': LLM_Llama_V3(model_name='FlagAlpha/Llama3-Chinese-8B-Instruct'),
+    # 'llama_v3': LLM_Llama_V3(model_name='ChineseAlpacaGroup/llama-3-chinese-8b-instruct-v3'),
     'glm_4': LLM_GLM_4()
 }
 
