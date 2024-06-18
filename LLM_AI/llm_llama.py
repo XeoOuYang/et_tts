@@ -6,7 +6,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList, StoppingCriteriaList
 
 from LLM_AI.llm_base import ForbiddenRomanNumbersLogitsProcessor, ForbiddenPunctuationsTokenLogitsProcessor, ForceTokenFixValueLogitsProcessor, \
-    SentenceStoppingCriteria
+    SentenceStoppingCriteria, ForbiddenFollowingCharacterLogitsProcessor
 from et_base import check_multi_head_attention
 from dataclasses import dataclass
 from typing import Dict
@@ -182,7 +182,7 @@ class LLM_Llama_V3(ET_LLM):
             else:
                 return False
         self._roman_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items() if is_roman(token)]
-        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '{(', ')}', '{{', '}}']
+        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '{(', '{{', '{%']
         self._punctuations_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
         # 中文
         from et_base import is_chinese
@@ -223,9 +223,11 @@ class LLM_Llama_V3(ET_LLM):
         # 最大句子数限制
         max_num_sentence = 3 if 'max_num_sentence' not in kwargs else kwargs['max_num_sentence']
         max_num_sentence = max(max_num_sentence, 1)
+        # 是否使用history缓存
+        use_history = False if 'use_history' not in kwargs else kwargs['use_history']
         # prompt编码
         input_ids, qa_ids_tokens = build_prompt(self.tokenizer, self.template, query=query,
-                                                system=system, history=history)
+                                                system=system, history=history if use_history else [])
         # 调整max_new_tokens/min_new_tokens参数
         max_new_tokens = 256 if 'max_new_tokens' not in kwargs else kwargs['max_new_tokens']
         max_new_tokens = max(max_new_tokens, qa_ids_tokens)
@@ -242,8 +244,12 @@ class LLM_Llama_V3(ET_LLM):
         stopping_criteria = StoppingCriteriaList()
         stopping_criteria.append(sentence_stopping_criteria)
         logits_processor = LogitsProcessorList()
-        logits_processor.append(ForbiddenRomanNumbersLogitsProcessor(self._roman_token_id_list, self.tokenizer))
-        logits_processor.append(ForbiddenPunctuationsTokenLogitsProcessor(self._punctuations_token_id_list))
+        # logits_processor.append(ForbiddenRomanNumbersLogitsProcessor(self._roman_token_id_list, self.tokenizer))
+        logits_processor.append(ForbiddenPunctuationsTokenLogitsProcessor(self._punctuations_token_id_list, len(input_ids[0])))
+        logits_processor.append(ForbiddenFollowingCharacterLogitsProcessor({
+            ':': self.tokenizer.convert_tokens_to_ids(['}']),
+            'type': self._roman_token_id_list,
+        }, self.tokenizer))
         language = kwargs['language'] if 'language' in kwargs else None
         if language == 'chinese':
             logits_processor.append(ForceTokenFixValueLogitsProcessor(self._masked_indicator_en))

@@ -38,7 +38,7 @@ async def welcome():
 async def startup():
     greetings = await llm_async(kwargs={
         'query': '', 'role_play': 'You are "ET", an "AI" brain. Reply in English.', 'language': 'english',
-        'context': 'fastapi startup', 'inst_text': 'Greetings to user', 'max_num_sentence': 3
+        'context': 'fastapi startup', 'inst_text': 'Greetings to user', 'max_num_sentence': 3, "use_history": False
     })
     greetings = json.loads(greetings.body)['text']
     audio = await tts_async(kwargs={
@@ -54,7 +54,7 @@ async def startup():
 async def shutdown():
     goodbye = await llm_async(kwargs={
         'query': '', 'role_play': 'You are "ET", an "AI" brain. Reply in English.', 'language': 'english',
-        'context': 'fastapi startup', 'inst_text': 'Says goodbye to user', 'max_num_sentence': 3
+        'context': 'fastapi startup', 'inst_text': 'Says goodbye to user', 'max_num_sentence': 3, "use_history": False
     })
     goodbye = json.loads(goodbye.body)['text']
     audio = await tts_async(kwargs={

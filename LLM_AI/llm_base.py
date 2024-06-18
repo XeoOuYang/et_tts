@@ -11,8 +11,8 @@ class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
         self._model_tokenizer = tokenizer
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
-        last_word = self._model_tokenizer.decode(input_ids[0][-1])
-        if 'type' in last_word.lower() or 'types' in last_word.lower():
+        last_word = self._model_tokenizer.decode(input_ids[0][-1]).lower()
+        if 'type' in last_word:
             processed_scores = scores.clone()
             processed_scores[:, self._roman_token_id_list] = -float('inf')
             return processed_scores
@@ -20,13 +20,28 @@ class ForbiddenRomanNumbersLogitsProcessor(LogitsProcessor):
             return scores
 
 
+class ForbiddenFollowingCharacterLogitsProcessor(LogitsProcessor):
+    def __init__(self, rule_dict: dict[str, list[int]], tokenizer):
+        self._rule_dict = rule_dict
+        self._model_tokenizer = tokenizer
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        last_word = self._model_tokenizer.decode(input_ids[0][-1]).lower()
+        processed_scores = scores.clone()
+        for key, value in self._rule_dict.items():
+            if key in last_word: processed_scores[:, value] = -float('inf')
+        return processed_scores
+
+
+
 class ForbiddenPunctuationsTokenLogitsProcessor(LogitsProcessor):
-    def __init__(self, bad_bos_token_id_list = None):
-        self._bad_bos_token_id_list = bad_bos_token_id_list
+    def __init__(self, bad_bos_token_id_list, start_ids_length):
+        self._bad_bos_token_id_list = [token_id for token_id in bad_bos_token_id_list if token_id is not None]
+        self._start_ids_length = start_ids_length
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         new_token_len = input_ids.shape[-1]
-        if new_token_len <= 0:
+        if new_token_len <= self._start_ids_length:
             processed_scores = scores.clone()
             processed_scores[:, self._bad_bos_token_id_list] = -float('inf')
             return processed_scores

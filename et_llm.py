@@ -5,7 +5,7 @@ from LLM_AI.llm_glm import LLM_GLM_4
 
 LLM_INSTANCE = {
     'llama_v3': LLM_Llama_V3(),
-    # 'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V6'),
+    # 'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V10'),
     'glm_4': LLM_GLM_4()
 }
 
