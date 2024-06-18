@@ -82,14 +82,14 @@ class LLM_GLM_4(ET_LLM):
             'top_k': 3,
             'temperature': 0.7,
             'repetition_penalty': 1.2,
-            'eos_token_id': self.stop_token_id[0],
+            'eos_token_id': self.stop_token_id,
             'pad_token_id': self.tokenizer.eos_token_id,
             'do_sample': True,
             'no_repeat_ngram_size': 8,
             'length_penalty': 1.5,
             # 'max_length': 4096
         }
-        self.sentence_token_list = ['!', '！', '.', '。', '?', '？',]
+        self.sentence_token_list = ['!', '！', '.', '。', '?', '？', '~']
         # print(self.sentence_token_id_list)
         self.history_cached: dict[str, list] = {}
 
@@ -152,6 +152,8 @@ class LLM_GLM_4(ET_LLM):
         outputs = outputs[:, input_ids['input_ids'].shape[1]:]
         # if sentence_stopping_criteria.last_sentence_token_idx > 0:
         #     outputs = outputs[:sentence_stopping_criteria.last_sentence_token_idx]
+        # '<|endoftext|>'是否表示已结束？
+        print(sentence_stopping_criteria.tokens_decoded_words)
         print('reason_stop ==>', sentence_stopping_criteria.reason_stop, max_num_sentence)
         an = ''.join(sentence_stopping_criteria.tokens_decoded_words)
         if an == '': an = self.tokenizer.decode(outputs[0], skip_special_tokens=False)

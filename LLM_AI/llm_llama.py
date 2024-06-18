@@ -182,7 +182,7 @@ class LLM_Llama_V3(ET_LLM):
             else:
                 return False
         self._roman_token_id_list = [token_id for token, token_id in self.tokenizer.vocab.items() if is_roman(token)]
-        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '{(', '{{', '{%']
+        punctuation_list = ['，', '。', '？', '！', '“', '”', '：', ',', '.', '?', '!', '"', "'", ':', '*', '{(', '{{', '{%', '**']
         self._punctuations_token_id_list = self.tokenizer.convert_tokens_to_ids(punctuation_list)
         # 中文
         from et_base import is_chinese
