@@ -9,6 +9,7 @@ TTS_INSTANCE = {
     'ov_v2_English': OpenVoiceV2_TTS(),
     'chat_tts': ChatTTS(),
 }
+TTS_VERSION = [key for key in TTS_INSTANCE.keys()]
 
 
 def tts_chat_tts(text: str, ref_speaker, **kwargs):

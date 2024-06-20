@@ -71,11 +71,23 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse({"message": exc.detail, "payload": await request.json()}, status_code=exc.status_code)
 
 
+@app.get('/llm/tts/ver')
+async def version_async():
+    """
+    curl -X 'GET' \
+      'http://127.0.0.1:9394/llm/tts/ver' \
+      -H 'accept: application/json'
+    """
+    from et_llm import LLM_VERSION
+    from et_tts import TTS_VERSION
+    return JSONResponse({"llm": LLM_VERSION, "tts": TTS_VERSION}, status_code=200)
+
+
 @app.post('/llm/tts/tr')
 async def sop_llm_tts_async(kwargs: dict = None):
     """
     curl -X 'POST' \
-      'http://127.0.0.1:9394/concat/llm/tts' \
+      'http://127.0.0.1:9394/llm/tts/tr' \
       -H 'accept: application/json' \
       -H 'Content-Type: application/json' \
       -d '{
@@ -157,6 +169,7 @@ async def llm_async(kwargs: dict = None):
         raise HTTPException(status_code=400, detail="neither param query or param inst_text should be assigned")
     # 指定调用llm模型
     spc_type = payload.pop('spc_type') if 'spc_type' in payload else 'llm_llama'
+    spc_language = payload['language'] if 'language' in payload else 'english'
     # 参数normalize
     max_new_tokens = payload['max_new_tokens'] if 'max_new_tokens' in payload else 256
     payload['max_new_tokens'] = max_new_tokens
@@ -167,7 +180,7 @@ async def llm_async(kwargs: dict = None):
     # 同步访问
     await _llm_lock_.acquire()
     try:
-        if spc_type == 'llm_glm':
+        if spc_type == 'llm_glm' and spc_language == 'chinese':
             text = await _llm_glm_(query, role_play, context, inst_text, **payload)
         else:
             text = await _llm_llama_(query, role_play, context, inst_text, **payload)
@@ -212,10 +225,11 @@ async def tts_async(kwargs: dict = None):
         os.makedirs(out_dir)
     # 指定调用tts模型
     spc_type = payload.pop('spc_type') if 'spc_type' in payload else 'default'
+    spc_language = payload['language'] if 'language' in payload else 'english'
     # 同步访问
     await _tts_lock_.acquire()
     try:
-        out = await tts_async_with(spc_type, text, out_path, payload=payload)
+        out = await tts_async_with(spc_type, text, out_path, spc_language, payload=payload)
         # 返回json
         return JSONResponse({"path": out, "payload": kwargs})
     except PermissionError as ignore:
@@ -225,7 +239,7 @@ async def tts_async(kwargs: dict = None):
         _tts_lock_.release()
 
 
-async def tts_async_with(spc_type, text, out_path, payload: dict = None):
+async def tts_async_with(spc_type, text, out_path, spc_language, payload: dict = None):
     async def _tts_ov_v2_(_text, _ref_audio, _out_path, **_payload):
         with timer('tts_ov_v2'):
             _out = tts_ov_v2(_text, ref_speaker=_ref_audio, output=_out_path, **_payload)
@@ -247,7 +261,7 @@ async def tts_async_with(spc_type, text, out_path, payload: dict = None):
             _out = tts_chat_tts(_text, ref_speaker=_ref_audio, output=_out_path, **_payload)
         return _out
     # 调用不同模型
-    if spc_type == 'chat_tts':
+    if spc_type == 'chat_tts' and spc_language in ('chinese', 'english'):
         manual_seed = payload.pop('manual_seed') if 'manual_seed' in payload else 5656
         assert (isinstance(manual_seed, str) and str.isdigit(manual_seed)) or isinstance(manual_seed, int)
         ref_audio = manual_seed if isinstance(manual_seed, int) else int(manual_seed)

@@ -8,6 +8,7 @@ LLM_INSTANCE = {
     # 'llama_v3': LLM_Llama_V3(model_name='Mecord-FT/Meta-Llama-3-8B-V10'),
     # 'llama_v3': LLM_Llama_V3(model_name='FlagAlpha/Llama3-Chinese-8B-Instruct'),
     # 'llama_v3': LLM_Llama_V3(model_name='ChineseAlpacaGroup/llama-3-chinese-8b-instruct-v3'),
+    # 'llama_v3': LLM_Llama_V3(model_name='LLM-Research/Llama3-8B-Chinese-Chat'),
     'glm_4': LLM_GLM_4()
 }
 
@@ -19,6 +20,10 @@ def is_load(model: str):
 def unload_model(model: str):
     assert model in LLM_INSTANCE
     LLM_INSTANCE[model].unload_model()
+    LLM_VERSION[model] = False
+
+
+LLM_VERSION = {key: is_load(key) for key in LLM_INSTANCE.keys()}
 
 
 def count_sentence(text):
@@ -33,6 +38,7 @@ def llm_glm_4(query, role_play, context, inst_text, **kwargs):
         unload_model('llama_v3')
     # 加载新模型
     llm = LLM_INSTANCE['glm_4']
+    LLM_VERSION['glm_4'] = True
     system_text = f'{role_play}\n\n{context}'
     query = f'{inst_text}' if query == '' else f'{inst_text}\n{query}'
     an = llm.llm(query=query, system=system_text, **kwargs)
@@ -46,6 +52,7 @@ def llm_llama_v3(query, role_play, context, inst_text, **kwargs):
         unload_model('glm_4')
     # 加载新模型
     llm = LLM_INSTANCE['llama_v3']
+    LLM_VERSION['llama_v3'] = True
     system_text = f'{role_play}\n\n{context}'
     query = f'{inst_text}' if query == '' else f'{inst_text}\n{query}'
     an = llm.llm(query=query, system=system_text, **kwargs)

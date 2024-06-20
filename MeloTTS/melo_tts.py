@@ -27,6 +27,7 @@ class Melo_tts(ET_TTS):
         ckpt_path = f'{melo_models}{os.path.sep}{lang_setting["path"]}{os.path.sep}checkpoint.pth'
         self.model = TTS(language=lang_setting['language'], config_path=config_path, ckpt_path=ckpt_path, device=device)
         self.speaker_id = lang_setting['speaker']
+        print(language, config_path, ckpt_path)
 
     def tts(self, text: str, ref_speaker: str, **kwargs):
         # 推理
