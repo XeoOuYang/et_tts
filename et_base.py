@@ -100,6 +100,21 @@ def fix_mci(audio_path, output_path=None):
     return audio_path
 
 
+def loud_normalize(out, loud):
+    """
+    使用EBU R128标准校正音频
+    :param out:
+    :param loud:
+    """
+    dir_name = os.path.dirname(out)
+    name, suffix = os.path.splitext(os.path.basename(out))
+    out_path = os.path.join(dir_name, f'{name}_{loud}{suffix}')
+    cmd = ['ffmpeg', '-v', 'quiet', '-y', '-i', out, '-af', f'loudnorm=I={loud}:TP=-2:LRA=11', '-c:a', 'pcm_s16le', out_path]
+    import subprocess
+    subprocess.call(cmd)
+    return out_path
+
+
 import time
 from contextlib import contextmanager
 

@@ -230,6 +230,9 @@ async def tts_async(kwargs: dict = None):
     await _tts_lock_.acquire()
     try:
         out = await tts_async_with(spc_type, text, out_path, spc_language, payload=payload)
+        # tts语音响度均衡
+        # from et_base import loud_normalize
+        # out = loud_normalize(out, -5.0)
         # 返回json
         return JSONResponse({"path": out, "payload": kwargs})
     except PermissionError as ignore:
