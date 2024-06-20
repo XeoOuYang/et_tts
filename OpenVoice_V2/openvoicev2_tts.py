@@ -34,7 +34,6 @@ class OpenVoiceV2_TTS(ET_TTS):
         self.speaker_key = SES_DICT[lang].lower().replace('_', '-')
         pth_ses = os.path.join(ckpt_dir, f'base_speakers{os.path.sep}ses{os.path.sep}{self.speaker_key}.pth')
         self.source_se = torch.load(pth_ses, map_location=device)
-        print(lang, ckpt_converter, pth_ses)
         # v1
         # base_dir_v1 = os.path.join(model_dir_base, f'OpenVoice_V2{os.path.sep}checkpoints')
         # pth_ses_v1 = os.path.join(base_dir_v1, f'base_speakers{os.path.sep}EN')
