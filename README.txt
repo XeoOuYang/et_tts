@@ -78,3 +78,5 @@ pip install num2words
 
 14、deepspeed
 https://www.piwheels.org/project/deepspeed/
+
+mkdir -p ~/.pip && echo -e "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple" > ~/.pip/pip.conf

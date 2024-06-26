@@ -30,7 +30,7 @@ async def ver_async():
     return response.status_code == 200
 
 
-async def llm_async(query, role_play, context, inst_text, max_num_sentence, repetition_penalty,
+async def llm_async(query, role_play, context, inst_text, max_num_sentence, repetition_penalty=1.05,
                     et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/llm/tr"
     headers = {
