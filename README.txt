@@ -80,3 +80,4 @@ pip install num2words
 https://www.piwheels.org/project/deepspeed/
 
 mkdir -p ~/.pip && echo -e "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple" > ~/.pip/pip.conf
+ffmpeg -i 88795527-1-208.mp3 -af silenceremove=start_periods=1:start_duration=1.0:start_threshold=-30dB:stop_periods=-1.0:stop_duration=1.0:stop_threshold=-30dB -y 88795527.mp3

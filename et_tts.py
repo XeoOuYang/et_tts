@@ -139,15 +139,22 @@ if __name__ == '__main__':
     # text_list = [text_str.strip().replace('\n\n', '\n').strip('\n')]
     json_array = read_json(os.path.abspath(f'resources{os.path.sep}20240522.json'))
     text_list = [item['text'].strip().replace('\n\n', '\n').strip('\n') for item in json_array]
-    ref_speaker = os.path.abspath(f'resources{os.path.sep}man_role0_ref.wav')
+    # ref_speaker = os.path.abspath(f'resources{os.path.sep}man_role0_ref.wav')
+    ref_speaker = os.path.abspath(f'resources{os.path.sep}88795527_10s.mp3')
     output_dir = os.path.abspath(f'outputs_v2{os.path.sep}{yyyymmdd}{os.path.sep}20240522')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    text_list = [text_list[0]]
+    # text_list = [text_list[0]]
+    text = ('小兔子和小狐狸在大家眼中是一對奇怪的情侶，小兔子總是慢騰騰的，明天要交差的活，今天絕對不會幹完，'
+            '平時不管做什麽事都磨磨蹭蹭的，是大家公認的慢性子。而小狐狸可是個妥妥的急性子，做事雷厲風行，'
+            '卻常常是火急火燎的，總會因為太著急而出錯。就這樣兩個根本不在一條路上的人，居然在一起了。')
+    import zhconv
+    text = zhconv.convert(text, 'zh-cn')
+    text_list = [text]
     # 开始转换
     for text_idx, text_str in enumerate(text_list):
         output_name = os.path.join(output_dir, f'tts_{text_idx}.wav')
-        # if not os.path.exists(output_name):
-        #     tts_result = tts(text_str, ref_speaker, output_name)
-        tts_result = tts_chat_tts(text_str, 8, output=output_name)
+        # tts_result = tts_ov_v2(text_str, ref_speaker, output=output_name, language='chinese')
+        tts_result = tts_chat_tts(text_str, 8, output=output_name, language='chinese',
+                                  skip_refine_text=True)
         print(tts_result)

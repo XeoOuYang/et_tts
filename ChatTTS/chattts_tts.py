@@ -3,9 +3,14 @@ import os.path
 import random
 import re
 import shutil
+
+import librosa
 import numpy
+import numpy as np
+import pyAudioAnalysis.audioBasicIO
 
 import torch
+import tqdm
 from transformers import LogitsProcessor, LogitsProcessorList
 
 from LLM_AI.llm_base import ForceTokenFixValueLogitsProcessor
@@ -218,10 +223,9 @@ class ChatTTS(ET_TTS):
             wav_path = kwargs['output']
         return wav_path
 
-
-def run_random_seed(text, start=0, end=10000, bias=0):
+def run_random_seed(text, start=0, end=10000, bias=0, ref_audio=''):
     # 读取缓存
-    tts = ChatTTS(manual_seed=2000, refine_text=True)
+    tts = ChatTTS(manual_seed=2000, refine_text=False)
     seed_base = os.path.join(outputs_v2, f'seed')
     if not os.path.exists(seed_base):
         os.makedirs(seed_base)
@@ -235,20 +239,121 @@ def run_random_seed(text, start=0, end=10000, bias=0):
         return json_dict
     seed_dict = load_seed_set(seed_set_file)
     # 随机测试
-    for idx in range(end):
+    for _ in tqdm.tqdm(range(end)):
         manual_seed = random.randint(0, 100000) + bias
         if manual_seed not in seed_dict:
             prompt = f'[oral_2][laugh_0][break_4]'
-            out_path = os.path.join(seed_base, f'chattts_{manual_seed}_{idx}.wav')
+            out_path = os.path.join(seed_base, f'chattts_{manual_seed}.wav')
             with timer('chat_tts'):
                 out_path = tts.tts(text=text, ref_speaker=f'{manual_seed}', output=out_path,
                                    refine_prompt=prompt, manual_seed=manual_seed, language='chinese')
-            seed_dict[manual_seed] = out_path
+            seed_dict[manual_seed] = {'out_path': out_path}
+        # 计算概率
+        print(seed_dict[manual_seed]['out_path'])
+        _f0_, _mfcc_, _dtw_mfcc_ = similarity(seed_dict[manual_seed]['out_path'], ref_audio)
+        seed_dict[manual_seed]['f0'] = _f0_
+        seed_dict[manual_seed]['mfcc'] = _mfcc_
+        seed_dict[manual_seed]['dtw_mfcc'] = _dtw_mfcc_
+        # _all_ = similarity_all(seed_dict[manual_seed]['out_path'], ref_audio)
+        # seed_dict[manual_seed]['all'] = _all_
+        _score_ = audio_similarity(seed_dict[manual_seed]['out_path'], ref_audio)
+        seed_dict[manual_seed]['score'] = _score_
         print(seed_dict[manual_seed])
     # 保存结果
     with open(seed_set_file, 'w', encoding='utf8', errors='ignore') as fd:
         fd.write(json.dumps(seed_dict))
 
+
+def mfcc(audio_path, sr=16000):
+    audio, _sr = librosa.load(audio_path)
+    if _sr != sr: audio = librosa.resample(y=audio, orig_sr=_sr, target_sr=sr)
+    # 预加权
+    preemph = 0.95
+    audio = np.append(audio[0], audio[1:]-preemph*audio[:-1])
+    from librosa.feature import mfcc
+    # 计算mfcc特征，并且归一化
+    audio_mfcc = mfcc(y=audio, sr=sr, n_mfcc=64)
+
+    return np.mean(np.abs(audio_mfcc), axis=1), audio_mfcc
+
+def f0(audio_path, sr=16000):
+    """音高"""
+    audio, _sr = librosa.load(audio_path)
+    if _sr != sr: audio = librosa.resample(y=audio, orig_sr=_sr, target_sr=sr)
+    from librosa import pyin, yin, note_to_hz
+    audio_f0 = yin(y=audio, fmin=note_to_hz('C0'), fmax=note_to_hz('C7'), sr=sr)
+
+    return np.mean(audio_f0)
+
+def similarity_all(audio_path, ref_path):
+    from pyAudioAnalysis import audioBasicIO
+    from pyAudioAnalysis import ShortTermFeatures
+    # 生成audio
+    [Fs, x] = audioBasicIO.read_audio_file(audio_path)
+    x = audioBasicIO.stereo_to_mono(x)
+    F_audio, _ = ShortTermFeatures.feature_extraction(x, Fs, 0.050*Fs, 0.025*Fs)
+    # 参考audio
+    [Fs, x] = audioBasicIO.read_audio_file(ref_path)
+    x = audioBasicIO.stereo_to_mono(x)
+    F_ref, _ = ShortTermFeatures.feature_extraction(x, Fs, 0.050*Fs, 0.025*Fs)
+    # 特征计算
+    F_audio = np.mean(F_audio, axis=1)
+    F_ref = np.mean(F_ref, axis=1)
+    from scipy.spatial.distance import cosine
+    # _all_ = np.abs(F_audio-F_ref)/np.abs(F_ref)
+    _all_ = cosine(F_audio, F_ref)
+    return _all_
+
+def similarity(audio_path, ref_path, sr=16000):
+    """
+    f0: 基频特征，说话越大声，值越大，响亮程度越高，负数就是说话比原来低沉，体现在音高上
+    mfcc: 梅尔倒谱mean特征，使用曼哈顿距离计算，值越小，两者特征越相似，体现在说话频率上
+    dtw_mfcc: dtw计算mfcc时序特征，表示音频整体相似程度，值越大与原音频越相似，体现在音色上
+    """
+    audio_mfcc, seq_audio_mfcc = mfcc(audio_path, sr)
+    ref_mfcc, seq_ref_mfcc = mfcc(ref_path, sr)
+    from scipy.spatial.distance import cityblock
+    # 曼哈顿距离
+    similarity_mfcc = cityblock(audio_mfcc, ref_mfcc)
+    similarity_mfcc = similarity_mfcc/np.mean(ref_mfcc)
+    # dtw计算距离
+    global count_dtw
+    count_dtw = 0
+    from fastdtw import fastdtw
+    def dist_dtw(x, y):
+        global count_dtw
+        count_dtw += 1
+        return np.linalg.norm(x - y, ord=2)
+    fastdtw_mfcc, _ = fastdtw(seq_audio_mfcc.T, seq_ref_mfcc.T, dist=dist_dtw)
+    # f0特征
+    audio_f0 = f0(audio_path, sr)
+    ref_f0 = f0(ref_path, sr)
+    similarity_f0 = (audio_f0-ref_f0)/ref_f0
+    # 返回值
+    return similarity_f0, similarity_mfcc, fastdtw_mfcc/count_dtw
+
+def audio_similarity(audio_path, ref_path, sr=16000):
+    """
+    其他计算音频特征：
+    zcr: 过零率
+    rhythm: 语速节奏
+    chroma: 表示两个音频点的差异程度
+    energy: 振幅，体现在响度
+    spectral: 能力谱特征， 越亮表示越大声
+    perceptual: 能被人感知程度
+    """
+    from audio_similarity import AudioSimilarity
+    weights = {
+        'zcr_similarity': 0.2,
+        'rhythm_similarity': 0.2,
+        'chroma_similarity': 0.2,
+        'energy_envelope_similarity': 0.1,
+        'spectral_contrast_similarity': 0.1,
+        'perceptual_similarity': 0.2
+    }
+    audio_similarity = AudioSimilarity(ref_path, audio_path, sr, weights, verbose=True)
+    similarity_score = audio_similarity.stent_weighted_audio_similarity(metrics='all')
+    return similarity_score
 
 if __name__ == '__main__':
     from et_dirs import outputs_v2
@@ -278,17 +383,23 @@ if __name__ == '__main__':
     #         '哥哥，咱俩吃同一个棒棒糖，你女朋友知道了，不会吃醋吧？'
     #         '哥哥，你骑着小电动车带着我，你女朋友知道了不会揍我吧？'
     #         '你女朋友好可怕，不像我，只会心疼giegie。')
-    # run_random_seed(text, 0, 1, bias=0)
-    with open('text.txt', 'r', encoding='utf8', errors='ignore') as fd:
-        text = fd.read()
-    # 本地测试
-    tts = ChatTTS(manual_seed=410)
-    manual_seed = tts.manual_seed
-    # # 随机测试
-    for idx in range(1):
-        prompt = f'[oral_2][laugh_0][break_4]'
-        out_path = os.path.join(outputs_v2, f'chattts_{manual_seed}_{idx}.wav')
-        with timer('chat_tts'):
-            out_path = tts.tts(text=text, ref_speaker=f'{manual_seed}', output=out_path,
-                               refine_prompt=prompt, manual_seed=manual_seed)
-        print(out_path)
+    text = ('回来得太晚了吧，你都睡着了。你怎么连睡着的样子都这么好看呀。可是你要是这么睡着的话，会感冒的。'
+            '被子都不盖，你这个笨蛋在想什么呀。没事，没事，是我呀把你吵醒了。这样睡着的话，会感冒的，我帮你把被子盖上。'
+            '睡吧，睡吧，对不起呀，我是不是回来得太晚了？我呀，我就看着你睡着之后的样子，在睡你都不知道你睡着的样子有多可爱！')
+    from et_dirs import resources
+    ref_audio = os.path.join(resources, '88795527.mp3')
+    run_random_seed(text, 0, 500, bias=0, ref_audio=ref_audio)
+
+    # with open('text.txt', 'r', encoding='utf8', errors='ignore') as fd:
+    #     text = fd.read()
+    # # 本地测试
+    # tts = ChatTTS(manual_seed=410)
+    # manual_seed = tts.manual_seed
+    # # # 随机测试
+    # for idx in range(1):
+    #     prompt = f'[oral_2][laugh_0][break_4]'
+    #     out_path = os.path.join(outputs_v2, f'chattts_{manual_seed}_{idx}.wav')
+    #     with timer('chat_tts'):
+    #         out_path = tts.tts(text=text, ref_speaker=f'{manual_seed}', output=out_path,
+    #                            refine_prompt=prompt, manual_seed=manual_seed)
+    #     print(out_path)

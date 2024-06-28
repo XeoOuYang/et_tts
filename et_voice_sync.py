@@ -5,7 +5,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 from et_dirs import resources
 LANGUAGE = {
-    'en': 'English', 'sp': 'Spanish', 'cn': 'Chinese'
+    'en': 'English', 'sp': 'Spanish', 'zh': 'Chinese'
 }
 from faster_whisper import WhisperModel
 from et_http_api import llm_async, tts_async
@@ -46,8 +46,8 @@ def play(audio):
 if __name__ == '__main__':
     from et_base import timer
     # source = os.path.join(resources, 'example_reference.mp3')
-    source = os.path.join(resources, 'man_role0_ref.wav')
-    from_lang = 'en'
+    source = os.path.join(resources, '88795527.mp3')
+    from_lang = 'zh'
     to_lang = 'sp'
     with timer('asr'):
         text = asr(source, lang=from_lang)
