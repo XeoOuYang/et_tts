@@ -251,13 +251,13 @@ def run_random_seed(text, start=0, end=10000, bias=0, ref_audio=''):
         # 计算概率
         print(seed_dict[manual_seed]['out_path'])
         _f0_, _mfcc_, _dtw_mfcc_ = similarity(seed_dict[manual_seed]['out_path'], ref_audio)
-        seed_dict[manual_seed]['f0'] = _f0_
-        seed_dict[manual_seed]['mfcc'] = _mfcc_
-        seed_dict[manual_seed]['dtw_mfcc'] = _dtw_mfcc_
+        seed_dict[manual_seed]['f0'] = float(_f0_)
+        seed_dict[manual_seed]['mfcc'] = float(_mfcc_)
+        seed_dict[manual_seed]['dtw_mfcc'] = float(_dtw_mfcc_)
         # _all_ = similarity_all(seed_dict[manual_seed]['out_path'], ref_audio)
         # seed_dict[manual_seed]['all'] = _all_
         _score_ = audio_similarity(seed_dict[manual_seed]['out_path'], ref_audio)
-        seed_dict[manual_seed]['score'] = _score_
+        seed_dict[manual_seed]['score'] = {k: float(v) for k, v in _score_.items()}
         print(seed_dict[manual_seed])
     # 保存结果
     with open(seed_set_file, 'w', encoding='utf8', errors='ignore') as fd:
@@ -355,6 +355,28 @@ def audio_similarity(audio_path, ref_path, sr=16000):
     similarity_score = audio_similarity.stent_weighted_audio_similarity(metrics='all')
     return similarity_score
 
+def seed_json_to_csv():
+    seed_base = os.path.join(outputs_v2, f'seed')
+    if not os.path.exists(seed_base):
+        os.makedirs(seed_base)
+    seed_set_file = os.path.join(seed_base, 'seed.json')
+    def load_seed_set(json_file) -> dict[int, str]:
+        if not os.path.exists(json_file):
+            return {}
+        with open(json_file, 'r', encoding='utf8', errors='ignore') as fd:
+            json_dict = json.loads(fd.read())
+        return json_dict
+
+    seed_dict = load_seed_set(seed_set_file)
+    lines = [','.join(['seed', 'f0', 'mfcc', 'dtw_mfcc', 'swass'])]
+    for k, v in seed_dict.items():
+        lines.append(','.join([k, str(v['f0']), str(v['mfcc']), str(v['dtw_mfcc']), str(v['score']['swass'])]))
+
+    seed_csv_file = os.path.join(seed_base, 'seed.csv')
+    with open(seed_csv_file, 'w', encoding='utf8', errors='ignore') as fd:
+        fd.write('\n'.join(lines))
+    # 写完
+
 if __name__ == '__main__':
     from et_dirs import outputs_v2
     # text = ('So, it’s a whole spectrum of collage, covering all bases, for your hair loss prevention,'
@@ -384,12 +406,12 @@ if __name__ == '__main__':
     #         '哥哥，你骑着小电动车带着我，你女朋友知道了不会揍我吧？'
     #         '你女朋友好可怕，不像我，只会心疼giegie。')
     text = ('回来得太晚了吧，你都睡着了。你怎么连睡着的样子都这么好看呀。可是你要是这么睡着的话，会感冒的。'
-            '被子都不盖，你这个笨蛋在想什么呀。没事，没事，是我呀把你吵醒了。这样睡着的话，会感冒的，我帮你把被子盖上。'
-            '睡吧，睡吧，对不起呀，我是不是回来得太晚了？我呀，我就看着你睡着之后的样子，在睡你都不知道你睡着的样子有多可爱！')
+            '被子都不盖，你这个笨蛋在想什么呀。没事，没事，是我呀。')
     from et_dirs import resources
     ref_audio = os.path.join(resources, '88795527.mp3')
-    run_random_seed(text, 0, 500, bias=0, ref_audio=ref_audio)
-
+    # 迭代10次1000抽，没1000抽保存1次
+    # for _ in range(100): run_random_seed(text, 0, 1000, bias=0, ref_audio=ref_audio)
+    seed_json_to_csv()
     # with open('text.txt', 'r', encoding='utf8', errors='ignore') as fd:
     #     text = fd.read()
     # # 本地测试

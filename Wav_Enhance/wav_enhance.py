@@ -78,3 +78,8 @@ class Wav_Enhance(ET_BASE):
             os.remove(output_path)
             output_path = kwargs['output']
         return output_path
+
+if __name__ == '__main__':
+    lambd = 0.9
+    ret_path = Wav_Enhance(lambd=lambd).enhance('C:\\Users\\1\\Downloads\\tmp0zsbc555.wav', output='C:\\Users\\1\\Downloads\\tmp0zsbc555_en.wav')
+    print(ret_path)
