@@ -17,6 +17,8 @@ sovits_svc_base = os.path.join(prj_dir, 'SoVITS_SVC')
 suno_bark_base = os.path.join(prj_dir, 'Suno_Bark')
 # ChatTTS
 chattts_base = os.path.join(prj_dir, 'ChatTTS')
+# Coqui_AI
+coqui_ai_base = os.path.join(prj_dir, 'Coqui_AI')
 # Wav Enhance
 wav_enhance_base = os.path.join(prj_dir, 'Wav_Enhance')
 # Wav Denoise

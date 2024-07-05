@@ -20,3 +20,6 @@ GPT_SoVITS/tools/asr/__pycache__/
 GPT_SoVITS/tools/i18n/__pycache__/
 LLM_AI/__pycache__/
 Suno_Bark/__pycache__/
+Ext_service/tool/__pycache__/
+Coqui_AI/__pycache__/
+Coqui_AI/TTS/__pycache__/

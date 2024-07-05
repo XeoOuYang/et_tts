@@ -1,0 +1,4 @@
+coqpit
+trainer
+hangul_romanize
+spacy
