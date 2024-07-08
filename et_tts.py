@@ -3,6 +3,7 @@ import shutil
 
 from ChatTTS.chattts_tts import ChatTTS
 from OpenVoice_V2.openvoicev2_tts import OpenVoiceV2_TTS
+from Coqui_AI.coqui_ai import CoquiTTS
 from et_base import yyyymmdd
 
 TTS_INSTANCE = {
@@ -45,6 +46,16 @@ def tts_ov_v2(text: str, ref_speaker: str, **kwargs):
     ret_path = tts.tts(text=text, ref_speaker=ref_speaker, **kwargs)
     return ret_path
 
+
+def tts_coqui(text: str, ref_speaker: str, **kwargs):
+    language = 'english' if 'language' not in kwargs else kwargs['language']
+    language = language.lower().capitalize()
+    inst_key = f'coqui_{language}'
+    if inst_key not in TTS_INSTANCE:
+        TTS_INSTANCE[inst_key] = CoquiTTS(language=language)
+    tts = TTS_INSTANCE[inst_key]
+    ret_path = tts.tts(text=text, ref_speaker=ref_speaker, **kwargs)
+    return ret_path
 
 def tts_gpt_sovits(text: str, ref_speaker: str, **kwargs):
     from GPT_SoVITS.gpt_sovits_tts import Gpt_SoVits

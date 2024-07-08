@@ -32,7 +32,7 @@ def check_multi_head_attention():
     if F.multi_head_attention_forward != _set_multi_head_attention_forward_:
         F.multi_head_attention_forward = _set_multi_head_attention_forward_
 
-
+# Generative Pre-trained Transformer: GPT
 class Gpt_SoVits(ET_TTS):
     def __init__(self, language: str = '英文', sovits_model: str = None):
         super().__init__()

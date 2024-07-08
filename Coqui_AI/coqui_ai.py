@@ -8,8 +8,15 @@ from et_base import ET_TTS
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 
+SES_DICT = {
+    "English": "en",
+    "French": "fr",
+    "Spanish": "es",
+    "Chinese": "zh-cn",
+}
+
 class CoquiTTS(ET_TTS):
-    def __init__(self, language='es'):
+    def __init__(self, language='English'):
         super().__init__()
         config = XttsConfig()
         from et_dirs import coqui_ai_base, model_dir_base
@@ -23,7 +30,7 @@ class CoquiTTS(ET_TTS):
         # 保持模型
         self.config = config
         self.model = model
-        self.language = language
+        self.language = SES_DICT[language]
 
     def tts(self, text: str, ref_speaker: str, **kwargs):
         language = self.language
@@ -74,13 +81,16 @@ if __name__ == '__main__':
     tts = CoquiTTS()
     from et_dirs import resources
     from et_base import timer
-    # ref_speaker = os.path.join(resources, 'example_reference.wav')
-    ref_speaker = os.path.join(resources, 'ref_spanish_59s.wav')
-    with timer('tts-es'):
-        output = tts.tts('Si están intentando comprar ambos, presione el ícono del carrito de compras en la esquina y agréguelos ambos al carrito.'
-                         'Sólo para resumir para aquellos de ustedes que son nuevos. ¡Bien! Colágeno, ideal para cabello, piel, uñas, articulaciones.'
-                         'Hay cinco tipos de colágeno aquí. Biotina, vitamina C, ácido hialurónico. Entonces es un suplemento de colágeno de espectro completo, ¿verdad?'
-                         'Cubre todas las bases allí. A diferencia de la mayoría de los suplementos de colágeno, la mayoría de los suplementos de colágeno solo tienen el tipo uno, ¿verdad?'
-                         'Entonces este es el espectro completo.',
-                         ref_speaker, language='es')
+    ref_speaker = os.path.join(resources, 'example_reference.wav')
+    # ref_speaker = os.path.join(resources, 'ref_spanish_59s.wav')
+    # with timer('tts-es'):
+    #     output = tts.tts('Si están intentando comprar ambos, presione el ícono del carrito de compras en la esquina y agréguelos ambos al carrito.'
+    #                      'Sólo para resumir para aquellos de ustedes que son nuevos. ¡Bien! Colágeno, ideal para cabello, piel, uñas, articulaciones.'
+    #                      'Hay cinco tipos de colágeno aquí. Biotina, vitamina C, ácido hialurónico. Entonces es un suplemento de colágeno de espectro completo, ¿verdad?'
+    #                      'Cubre todas las bases allí. A diferencia de la mayoría de los suplementos de colágeno, la mayoría de los suplementos de colágeno solo tienen el tipo uno, ¿verdad?'
+    #                      'Entonces este es el espectro completo.',
+    #                      ref_speaker, language='es')
+    #     print(output)
+    with timer('tts-ml'):
+        output = tts.tts('你好，我叫kate。我非常的fashion和international，我也会说一点日语，こんにちは。' , ref_speaker, language='zh-cn')
         print(output)

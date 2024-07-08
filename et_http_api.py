@@ -57,13 +57,21 @@ async def llm_async(query, role_play, context, inst_text, max_num_sentence, repe
         return ""
 
 
-async def tts_async(text, ref_name, out_name, spc_type, et_uuid=_ET_UUID_, language="english"):
+async def tts_coqui(text, ref_name, out_name, spc_type='coqui_tts', et_uuid=_ET_UUID_, language="spanish"):
+    return tts_async(text, ref_name, out_name, spc_type, et_uuid, language)
+
+
+async def tts_chat(text, ref_name: int, out_name, spc_type='chat_tts', et_uuid=_ET_UUID_, language="chinese"):
+    return tts_async(text, str(ref_name), out_name, spc_type, et_uuid, language)
+
+
+async def tts_async(text, ref_name, out_name, spc_type='ov_v2', et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/tts/tr"
     headers = {
         "accept": "application/json",
         "Content-Type": "application/json"
     }
-    # "spc_type": "ov_v2"
+    # "spc_type": "ov_v2", "chat_tts", "coqui_tts"
     # "ref_name": ref_name      # 指定音色
     # 以下是chatTTS参数
     # "spc_type": "chat_tts"
@@ -76,11 +84,13 @@ async def tts_async(text, ref_name, out_name, spc_type, et_uuid=_ET_UUID_, langu
         "out_name": out_name,
         "spc_type": spc_type,
         "ref_name": ref_name,
-        "manual_seed": 8,       # 1~22是预设音色
-        "refine_prompt": "[oral_7][laugh_1][break_2]",
-        "infer_prompt": "[speed_6]",
-        "skip_refine_text": False
     }
+    if spc_type == 'chat_tts':
+        data['manual_seed'] = int(ref_name) # 1~22是预设音色
+        data['refine_prompt'] = "[oral_7][laugh_1][break_2]"
+        data['infer_prompt'] = "[speed_6]"
+        data['skip_refine_text'] = False
+    # http请求
     response = await post_retry(url, headers, data)
     if response.status_code == 200:
         resp_json = json.loads(response.text)
@@ -90,34 +100,38 @@ async def tts_async(text, ref_name, out_name, spc_type, et_uuid=_ET_UUID_, langu
 
 
 async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_num_sentence,
-                            out_name, ref_name, tts_type, et_uuid=_ET_UUID_, language="english"):
+                            ref_name, out_name, tts_type, et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/llm/tts/tr"
     headers = {
         "accept": "application/json",
         "Content-Type": "application/json"
     }
-    data = {
-        "llm_param": {
-            "et_uuid": et_uuid,
-            "language": language,
-            "use_history": True,
-            "query": query,
-            "role_play": role_play,
-            "context": context,
-            "inst_text": inst_text,
-            "spc_type": llm_type,
-            "max_num_sentence": max_num_sentence,
-        },
-        "tts_param": {
+    llm_param = {
+        "et_uuid": et_uuid,
+        "language": language,
+        "use_history": True,
+        "query": query,
+        "role_play": role_play,
+        "context": context,
+        "inst_text": inst_text,
+        "spc_type": llm_type,
+        "max_num_sentence": max_num_sentence,
+    }
+    tts_param = {
             "et_uuid": et_uuid,
             "language": language,
             "spc_type": tts_type,
             "out_name": out_name,
             "ref_name": ref_name,
-            "manual_seed": ref_name,
-            "refine_prompt": "[oral_1][laugh_1][break_1]",
-            "skip_refine_text": False
         }
+    if tts_type == 'chat_tts':
+        tts_param['manual_seed'] = int(ref_name) # 1~22是预设音色
+        tts_param['refine_prompt'] = "[oral_7][laugh_1][break_2]"
+        tts_param['infer_prompt'] = "[speed_6]"
+        tts_param['skip_refine_text'] = False
+    data = {
+        "llm_param": llm_param,
+        "tts_param": tts_param
     }
     response = await post_retry(url, headers, data)
     if response.status_code == 200:

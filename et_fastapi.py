@@ -12,9 +12,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 from et_base import timer, yyyymmdd
 from et_llm import llm_llama_v3, llm_glm_4, count_sentence
-from et_tts import tts_ov_v2, tts_chat_tts
+from et_tts import tts_ov_v2, tts_chat_tts, tts_coqui
 from et_dirs import resources, outputs_v2
-from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_NAME
 
 app = FastAPI()
 app.add_middleware(
@@ -47,7 +46,8 @@ async def startup():
     audio = json.loads(audio.body)['path']
     # 预热模型
     print(f'E.T.> {greetings}')
-    play_audio_async(audio, SOUND_DEVICE_NAME[0]).join()
+    # from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_NAME
+    # play_audio_async(audio, SOUND_DEVICE_NAME[0]).join()
 
 
 @app.on_event('shutdown')
@@ -63,7 +63,8 @@ async def shutdown():
     audio = json.loads(audio.body)['path']
     # 销毁缓存
     print(f'E.T.> {goodbye}')
-    play_audio_async(audio, SOUND_DEVICE_NAME[0]).join()
+    # from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_NAME
+    # play_audio_async(audio, SOUND_DEVICE_NAME[0]).join()
 
 
 @app.exception_handler(HTTPException)
@@ -263,6 +264,12 @@ async def tts_async_with(spc_type, text, out_path, spc_language, payload: dict =
             # 开始tts
             _out = tts_chat_tts(_text, ref_speaker=_ref_audio, output=_out_path, **_payload)
         return _out
+
+    async def _tts_coqui_(_text, _ref_audio, _out_path, **_payload):
+        with timer('tts_coqui'):
+            _out = tts_coqui(_text, ref_speaker=_ref_audio, output=_out_path, **_payload)
+        return _out
+
     # 调用不同模型
     if spc_type == 'chat_tts' and spc_language in ('chinese', 'english'):
         manual_seed = payload.pop('manual_seed') if 'manual_seed' in payload else 5656
@@ -276,7 +283,10 @@ async def tts_async_with(spc_type, text, out_path, spc_language, payload: dict =
         if not os.path.exists(ref_audio):
             raise HTTPException(status_code=400, detail=f"param {ref_name} is not exists")
         else:
-            return await _tts_ov_v2_(text, ref_audio, out_path, **payload)
+            if spc_type == 'coqui_tts' or spc_language == 'spanish':
+                return await _tts_coqui_(text, ref_audio, out_path, **payload)
+            else:
+                return await _tts_ov_v2_(text, ref_audio, out_path, **payload)
 
 
 if __name__ == '__main__':
