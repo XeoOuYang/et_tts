@@ -7,8 +7,9 @@ from Coqui_AI.coqui_ai import CoquiTTS
 from et_base import yyyymmdd
 
 TTS_INSTANCE = {
-    'ov_v2_English': OpenVoiceV2_TTS(),
     'chat_tts': ChatTTS(),
+    'coqui_tts': CoquiTTS(),
+    'ov_v2_English': OpenVoiceV2_TTS(),
 }
 TTS_VERSION = [key for key in TTS_INSTANCE.keys()]
 
@@ -50,10 +51,10 @@ def tts_ov_v2(text: str, ref_speaker: str, **kwargs):
 def tts_coqui(text: str, ref_speaker: str, **kwargs):
     language = 'english' if 'language' not in kwargs else kwargs['language']
     language = language.lower().capitalize()
-    inst_key = f'coqui_{language}'
-    if inst_key not in TTS_INSTANCE:
-        TTS_INSTANCE[inst_key] = CoquiTTS(language=language)
-    tts = TTS_INSTANCE[inst_key]
+    kwargs['language'] = language
+    if 'coqui_tts' not in TTS_INSTANCE:
+        TTS_INSTANCE['coqui_tts'] = CoquiTTS()
+    tts = TTS_INSTANCE['coqui_tts']
     ret_path = tts.tts(text=text, ref_speaker=ref_speaker, **kwargs)
     return ret_path
 
