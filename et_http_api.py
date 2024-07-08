@@ -192,7 +192,7 @@ Trust me, these two are about to become your new best friends for a healthier, h
     assert tr_text is not None
     # 测试二、coqui-tts转换
     tts_path = asyncio.run(tts_coqui(
-        tr_text, ref_name='ref_spanish_59s', out_name='welcome_man_0_es'
+        tr_text, ref_name='ref_spanish_59s', out_name='welcome_man_0_es', language="Spanish"
     ))
     print(tts_path)
     assert tts_path is not None and tts_path != ''

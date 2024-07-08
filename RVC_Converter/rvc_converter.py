@@ -1,7 +1,7 @@
 import shutil
 
 from et_base import check_multi_head_attention
-from et_tts import ET_BASE
+from et_base import ET_BASE
 from pathlib import Path
 from scipy.io import wavfile
 from rvc.modules.vc.modules import VC

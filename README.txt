@@ -84,3 +84,5 @@ ffmpeg -i 88795527-1-208.mp3 -af silenceremove=start_periods=1:start_duration=1.
 
 numpy==1.25
 numba=0.58.0
+
+pip install --force-reinstall -v "av==11.0.0"

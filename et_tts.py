@@ -152,7 +152,7 @@ if __name__ == '__main__':
     json_array = read_json(os.path.abspath(f'resources{os.path.sep}20240522.json'))
     text_list = [item['text'].strip().replace('\n\n', '\n').strip('\n') for item in json_array]
     # ref_speaker = os.path.abspath(f'resources{os.path.sep}man_role0_ref.wav')
-    ref_speaker = os.path.abspath(f'resources{os.path.sep}88795527_10s.mp3')
+    ref_speaker = os.path.abspath(f'resources{os.path.sep}example_reference.mp3')
     output_dir = os.path.abspath(f'outputs_v2{os.path.sep}{yyyymmdd}')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -166,7 +166,8 @@ if __name__ == '__main__':
     # 开始转换
     for text_idx, text_str in enumerate(text_list):
         output_name = os.path.join(output_dir, f'tts_{text_idx}.wav')
-        # tts_result = tts_ov_v2(text_str, ref_speaker, output=output_name, language='chinese')
-        tts_result = tts_chat_tts(text_str, 8, output=output_name, language='chinese',
-                                  skip_refine_text=True)
+        tts_result = tts_ov_v2(text_str, ref_speaker, output=output_name, language='chinese')
+        # tts_result = tts_chat_tts(text_str, 8, output=output_name, language='chinese',
+        #                           skip_refine_text=True)
+        tts_result = rvc_convert(ref_speaker, output=tts_result)
         print(tts_result)
