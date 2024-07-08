@@ -152,7 +152,7 @@ if __name__ == '__main__':
     text_list = [item['text'].strip().replace('\n\n', '\n').strip('\n') for item in json_array]
     # ref_speaker = os.path.abspath(f'resources{os.path.sep}man_role0_ref.wav')
     ref_speaker = os.path.abspath(f'resources{os.path.sep}88795527_10s.mp3')
-    output_dir = os.path.abspath(f'outputs_v2{os.path.sep}{yyyymmdd}{os.path.sep}20240522')
+    output_dir = os.path.abspath(f'outputs_v2{os.path.sep}{yyyymmdd}')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     # text_list = [text_list[0]]
