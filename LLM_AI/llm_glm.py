@@ -161,7 +161,7 @@ class LLM_GLM_4(ET_LLM):
         # 当不存在<|endoftext|> <|user|> <|observation|>时，就是主动停止推理，否则就是达到max_tokens停止推理
         idx = an.rfind('<|endoftext|>')
         if idx > 0: an = an[:idx]
-        idx = an.rfind('<|user|>')
+        idx = an.find('<|user|>')
         if idx > 0: an = an[:idx]
         # 句子结束符号
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
