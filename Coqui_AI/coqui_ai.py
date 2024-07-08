@@ -60,7 +60,8 @@ class CoquiTTS(ET_TTS):
 
     def tts_v2(self, text, ref_speaker, language):
         # 提取参考声纹
-        gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(audio_path=[ref_speaker])
+        with timer('coqui_emb'):
+            gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(audio_path=[ref_speaker])
         # 开始推理
         # https://docs.coqui.ai/en/dev/models/xtts.html
         outputs = self.model.inference(

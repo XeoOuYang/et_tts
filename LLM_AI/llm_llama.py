@@ -274,6 +274,8 @@ class LLM_Llama_V3(ET_LLM):
         if an == '': an = self.tokenizer.decode(outputs)
         idx = an.rfind(self.template.stop_word)
         if idx > 0: an = an[:idx]
+        idx = an.rfind('<|start_header_id|>')
+        if idx > 0: an = an[:idx]
         # 句子结束符号
         idx = max([an.rfind(_ch) for _ch in self.sentence_token_list])
         # 大括号结束标志
