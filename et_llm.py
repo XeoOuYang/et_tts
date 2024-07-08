@@ -39,7 +39,7 @@ def llm_glm_4(query, role_play, context, inst_text, **kwargs):
     # 加载新模型
     llm = LLM_INSTANCE['glm_4']
     LLM_VERSION['glm_4'] = True
-    system_text = f'{role_play}\n\n{context}'
+    system_text = role_play if context == '' else f'{role_play}\n\n{context}'
     query = f'{inst_text}' if query == '' else f'{inst_text}\n{query}'
     an = llm.llm(query=query, system=system_text, **kwargs)
     # 对内容格式化

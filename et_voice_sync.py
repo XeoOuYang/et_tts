@@ -20,7 +20,7 @@ def asr(audio, lang) -> str:
 def translate(text, from_lang, to_lang) -> str:
     from_lang_name = LANGUAGE[from_lang]
     to_lang_name = LANGUAGE[to_lang]
-    output_format = 'result should in JSON format {"output": translate result}, JSON only'
+    output_format = 'result should in JSON format {"output": translated result}, JSON only'
     llm_text = llm_async(query=text,
                          role_play=f'You are an expert of language, good at translating from {from_lang_name} to {to_lang_name}.',
                          context='',

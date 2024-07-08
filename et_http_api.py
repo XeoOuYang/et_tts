@@ -1,3 +1,7 @@
+import asyncio
+import os.path
+from json import JSONDecodeError
+
 import requests
 import uuid
 from requests.adapters import HTTPAdapter
@@ -57,15 +61,15 @@ async def llm_async(query, role_play, context, inst_text, max_num_sentence, repe
         return ""
 
 
-async def tts_coqui(text, ref_name, out_name, spc_type='coqui_tts', et_uuid=_ET_UUID_, language="spanish"):
-    return tts_async(text, ref_name, out_name, spc_type, et_uuid, language)
+async def tts_coqui(text, ref_name, out_name, spc_type='coqui_tts', et_uuid=_ET_UUID_, language="Spanish"):
+    return await tts_async(text, ref_name, out_name, spc_type, et_uuid, language)
 
 
-async def tts_chat(text, ref_name: int, out_name, spc_type='chat_tts', et_uuid=_ET_UUID_, language="chinese"):
-    return tts_async(text, str(ref_name), out_name, spc_type, et_uuid, language)
+async def tts_chat(text, ref_name: int, out_name, spc_type='chat_tts', et_uuid=_ET_UUID_, language="Chinese"):
+    return await tts_async(text, str(ref_name), out_name, spc_type, et_uuid, language)
 
 
-async def tts_async(text, ref_name, out_name, spc_type='ov_v2', et_uuid=_ET_UUID_, language="english"):
+async def tts_async(text, ref_name, out_name, spc_type='ov_v2', et_uuid=_ET_UUID_, language="English"):
     url = f"{HOST}/tts/tr"
     headers = {
         "accept": "application/json",
@@ -139,3 +143,35 @@ async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_
         return resp_json['text'], resp_json['path']
     else:
         return "", ""
+
+if __name__ == '__main__':
+    # 测试一、llm翻译
+    from_lang_name = 'English'
+    to_lang_name = 'Spanish'
+    role_play = f'You are an expert of language, good at translating from {from_lang_name} to {to_lang_name}.'
+    output_format = 'result should in JSON format {"output": translated result}, JSON only'
+    inst_text = f'Please translate bellow text from {from_lang_name} to {to_lang_name}, {output_format}.'
+    query = """
+Hey guys, welcome back! Today's all about feeling amazing from the inside out,
+and I've got the perfect due for you: Micro Ingredient's Multi Collagen Peptides and Mushroom Coffee.
+Trust me, these two are about to become your new best friends for a healthier, happier you!
+    """.replace("\n", " ").strip()
+    llm_result = asyncio.run(llm_async(
+        query=query, role_play=role_play, context='',
+        inst_text=inst_text, max_num_sentence=16, language=from_lang_name.lower()
+    ))
+    print(llm_result)
+    try:
+        tr_text = json.loads(llm_result)['output']
+    except JSONDecodeError:
+        tr_text = None
+    assert tr_text is not None
+    # 测试二、coqui-tts转换
+    tts_path = asyncio.run(tts_coqui(
+        tr_text, ref_name='ref_spanish_59s', out_name='welcome_man_0_es'
+    ))
+    print(tts_path)
+    assert tts_path is not None and tts_path != ''
+    # 测试三、播放tts
+    from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_INDEX
+    play_audio_async(tts_path, SOUND_DEVICE_INDEX[1])
