@@ -172,7 +172,7 @@ class LLM_GLM_4(ET_LLM):
         elif idx > 0:
             an = an[:idx + 1]
         an = an.replace('\n', '').strip()
-        an = an.replace('<|user|>', '').strip()
+        # an = an.replace('<|user|>', '').strip()
         # 历史记录
         history.append({"role": 'user', 'content': query})
         history.append({"role": 'assistant', 'content': an})

@@ -285,8 +285,8 @@ class LLM_Llama_V3(ET_LLM):
         elif idx > 0:
             an = an[:idx+1]
         an = an.replace('\n', '').strip().replace(self.template.stop_word, "").strip()
-        an = an.replace('<|start_header_id|>', '').replace('assistant<|end_header_id|>', '')
-        an = an.replace('>', '').strip()
+        # an = an.replace('<|start_header_id|>', '').replace('assistant<|end_header_id|>', '')
+        # an = an.replace('>', '').strip()
         # 历史记录
         history.append({"role": 'user', 'message': query})
         history.append({"role": 'assistant', 'message': an})
