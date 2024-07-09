@@ -168,9 +168,13 @@ class LLM_GLM_4(ET_LLM):
         # 大括号结束标志
         brace_idx = an.find('}')
         if brace_idx > 0:
-            an = an[:brace_idx + 1]
+            an = an[:brace_idx+1]
+            # json格式
+            start_brace_idx = an.find('{')
+            if start_brace_idx > 0:
+                an = an[start_brace_idx:]
         elif idx > 0:
-            an = an[:idx + 1]
+            an = an[:idx+1]
         an = an.replace('\n', '').strip()
         # an = an.replace('<|user|>', '').strip()
         # 历史记录

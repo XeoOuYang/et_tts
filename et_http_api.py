@@ -155,31 +155,17 @@ async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_
         return "", ""
 
 if __name__ == '__main__':
-    # 测试零、调整语句，再翻译
+    # 测试一、llm调整&翻译
     query = """
 Hey guys, welcome back! Today's all about feeling amazing from the inside out,
 and I've got the perfect due for you: Micro Ingredient's Multi Collagen Peptides and Mushroom Coffee.
 Trust me, these two are about to become your new best friends for a healthier, happier you!
     """.replace("\n", " ").strip()
     from_lang_name = 'English'
-    output_format = 'result should in JSON format {"output": translated result}, JSON only'
-    role_play = 'You are a funny anchor, you speak simply and clearly. and you are live now.'
-    inst_text = f'Please modify the text below to suit your live streaming style, {output_format}'
-    llm_result = asyncio.run(llm_llama(
-        query=query, role_play=role_play, context='',
-        inst_text=inst_text, max_num_sentence=16, language=from_lang_name.lower()
-    ))
-    print(llm_result)
-    try:
-        tr_text = json.loads(llm_result)['output']
-    except JSONDecodeError:
-        tr_text = None
-    assert tr_text is not None
-    # 测试一、llm翻译
-    query = tr_text
     to_lang_name = 'Spanish'
+    output_format = 'Output the translated result in JSON format {"output": the translated result} at the end.'
     role_play = f'You are an expert of language, good at translating from {from_lang_name} to {to_lang_name}.'
-    inst_text = f'Please translate bellow text from {from_lang_name} to {to_lang_name}, {output_format}.'
+    inst_text = f'Please modify bellow text first, then translate them from {from_lang_name} to {to_lang_name}. {output_format}.'
     llm_result = asyncio.run(llm_llama(
         query=query, role_play=role_play, context='',
         inst_text=inst_text, max_num_sentence=16, language=from_lang_name.lower()

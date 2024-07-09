@@ -282,6 +282,10 @@ class LLM_Llama_V3(ET_LLM):
         brace_idx = an.find('}')
         if brace_idx > 0:
             an = an[:brace_idx+1]
+            # json格式
+            start_brace_idx = an.find('{')
+            if start_brace_idx > 0:
+                an = an[start_brace_idx:]
         elif idx > 0:
             an = an[:idx+1]
         an = an.replace('\n', '').strip().replace(self.template.stop_word, "").strip()
