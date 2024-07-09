@@ -106,3 +106,17 @@ class OpenVoiceV2_TTS(ET_TTS):
             os.remove(save_path)
             save_path = kwargs['output']
         return save_path
+
+if __name__ == '__main__':
+    tts = OpenVoiceV2_TTS(lang='Spanish')
+    from et_dirs import resources
+    from et_base import timer
+    ref_speaker = os.path.join(resources, 'ref_spanish_59s.wav')
+    with timer('tts-es'):
+        output = tts.tts('Si están intentando comprar ambos, presione el ícono del carrito de compras en la esquina y agréguelos ambos al carrito.'
+                         'Sólo para resumir para aquellos de ustedes que son nuevos. ¡Bien! Colágeno, ideal para cabello, piel, uñas, articulaciones.'
+                         'Hay cinco tipos de colágeno aquí. Biotina, vitamina C, ácido hialurónico. Entonces es un suplemento de colágeno de espectro completo, ¿verdad?'
+                         'Cubre todas las bases allí. A diferencia de la mayoría de los suplementos de colágeno, la mayoría de los suplementos de colágeno solo tienen el tipo uno, ¿verdad?'
+                         'Entonces este es el espectro completo.',
+                         ref_speaker, language='Spanish')
+        print(output)

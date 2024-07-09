@@ -80,10 +80,9 @@ class CoquiTTS(ET_TTS):
         return wav_path
 
 if __name__ == '__main__':
-    tts = CoquiTTS()
+    tts = CoquiTTS(language='Spanish')
     from et_dirs import resources
     from et_base import timer
-    ref_speaker = os.path.join(resources, 'example_reference.wav')
     ref_speaker = os.path.join(resources, 'ref_spanish_59s.wav')
     with timer('tts-es'):
         output = tts.tts('Si están intentando comprar ambos, presione el ícono del carrito de compras en la esquina y agréguelos ambos al carrito.'
