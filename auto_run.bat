@@ -27,13 +27,12 @@ def startup_api():
     subprocess.Popen([f'{api_dir}\\run_daemon.bat'], cwd=api_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
 
-def start_script():
+def start_script(run_mode=1):
     scrip_dir = 'E:\\et_tt_live'
-    # subprocess.Popen(['python', f'{scrip_dir}\\main.py'], cwd=scrip_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
-    subprocess.run(['python', f'{scrip_dir}\\main.py'], cwd=scrip_dir, shell=True)
+    # subprocess.Popen(['python', f'{scrip_dir}\\main.py', '--run_mode', f'{run_mode}'], cwd=scrip_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
+    subprocess.run(['python', f'{scrip_dir}\\main.py', '--run_mode', f'{run_mode}'], cwd=scrip_dir, shell=True)
 
 def auto_run():
-    print('==' * 48)
     # 检查并启动api服务
     if not check_api():
         task_api = threading.Thread(target=startup_api)
@@ -42,11 +41,14 @@ def auto_run():
     # 检查api服务
     while not check_api():
         time.sleep(1)
-    # 启动直播脚本
-    task_script = threading.Thread(target=start_script)
+    # 启动生成脚本
+    task_script = threading.Thread(target=start_script, kwargs={'run_mode':1})
     task_script.start()
     task_script.join()
-    print('==' * 48)
+    # 启动直播互动
+    task_script = threading.Thread(target=start_script, kwargs={'run_mode': 2})
+    task_script.start()
+    task_script.join()
 
 if __name__ == '__main__':
     auto_run()
