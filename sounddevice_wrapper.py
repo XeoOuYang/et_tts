@@ -31,7 +31,7 @@ def name_to_index(name_list, silent=False):
         device_list = [item for item in device_list if 'Microsoft' not in item['name']
                        and 'NVIDIA' not in item['name'] and 'Digital' not in item['name']]
         device_list = {item['name']: item['index'] for item in device_list if item['name'] in name_list}
-        index_list = [device_list[k] for k in name_list]
+        index_list = [device_list[k] if k in device_list else -1 for k in name_list]
         assert len(name_list) == len(index_list)
         if not silent:
             for idx, name in zip(index_list, name_list):

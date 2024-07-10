@@ -1,10 +1,14 @@
 1>2# : ^
 '''
 @echo off
+REM 激活conda环境
 call conda activate et_tts_env
-python %~f0 %*
+
+REM 执行当前批处理文件作为Python脚本
+python "%~f0" %*
+
+REM 退出批处理文件
 exit /b
-rem ^
 '''
 import subprocess
 import threading
@@ -32,12 +36,20 @@ def check_api():
 
 def startup_api():
     api_dir = 'E:\\ET_TTS'
-    subprocess.Popen([f'{api_dir}\\run_daemon.bat'], cwd=api_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
-
+    process = subprocess.Popen([f'{api_dir}\\run_daemon.bat'], cwd=api_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
+    process.wait()
 
 def start_script(config_id, run_mode=1, obs_video_port=0, obs_audio_port=0):
     scrip_dir = 'E:\\et_tt_live'
-    subprocess.run(['python', f'{scrip_dir}\\main.py', '--config_id', config_id, '--run_mode', str(run_mode), '--obs_video_port', str(obs_video_port), '--obs_audio_port', str(obs_audio_port)], cwd=scrip_dir, shell=True)
+    run_cmd = [
+        'python', f'{scrip_dir}\\main.py',
+        '--config_id', config_id,
+        '--run_mode', str(run_mode),
+        '--obs_video_port', str(obs_video_port),
+        '--obs_audio_port', str(obs_audio_port)
+    ]
+    process = subprocess.Popen(run_cmd, cwd=scrip_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
+    process.wait()
 
 def auto_run():
     API_RUNNING = False
@@ -45,13 +57,13 @@ def auto_run():
     if not check_api():
         task_api = threading.Thread(target=startup_api)
         task_api.start()
-        time.sleep(1)
+        time.sleep(3)
     else:
         API_RUNNING = True
         print('API service is running...')
     # 检查api服务
     while not API_RUNNING and not check_api():
-        time.sleep(1)
+        time.sleep(3)
     API_RUNNING = True
     print('API service is startup...')
     # 启动生成脚本
@@ -65,6 +77,8 @@ def auto_run():
     task_script.start()
     task_script.join()
     print('Interact has all done...')
+    # 退出界面
+    exit()
 
 if __name__ == '__main__':
     auto_run()
