@@ -83,15 +83,22 @@ if __name__ == '__main__':
     tts = CoquiTTS(language='Spanish')
     from et_dirs import resources
     from et_base import timer
-    ref_speaker = os.path.join(resources, 'ref_spanish_59s.wav')
-    with timer('tts-es'):
-        output = tts.tts('Si están intentando comprar ambos, presione el ícono del carrito de compras en la esquina y agréguelos ambos al carrito.'
-                         'Sólo para resumir para aquellos de ustedes que son nuevos. ¡Bien! Colágeno, ideal para cabello, piel, uñas, articulaciones.'
-                         'Hay cinco tipos de colágeno aquí. Biotina, vitamina C, ácido hialurónico. Entonces es un suplemento de colágeno de espectro completo, ¿verdad?'
-                         'Cubre todas las bases allí. A diferencia de la mayoría de los suplementos de colágeno, la mayoría de los suplementos de colágeno solo tienen el tipo uno, ¿verdad?'
-                         'Entonces este es el espectro completo.',
-                         ref_speaker, language='Spanish')
-        print(output)
-    # with timer('tts-ml'):
-    #     output = tts.tts('你好，我叫kate。我非常的fashion和international，我也会说一点日语，こんにちは。' , ref_speaker, language='Chinese')
+    # ref_speaker = os.path.join(resources, 'ref_spanish_59s.wav')
+    # with timer('tts-es'):
+    #     output = tts.tts('Si están intentando comprar ambos, presione el ícono del carrito de compras en la esquina y agréguelos ambos al carrito.'
+    #                      'Sólo para resumir para aquellos de ustedes que son nuevos. ¡Bien! Colágeno, ideal para cabello, piel, uñas, articulaciones.'
+    #                      'Hay cinco tipos de colágeno aquí. Biotina, vitamina C, ácido hialurónico. Entonces es un suplemento de colágeno de espectro completo, ¿verdad?'
+    #                      'Cubre todas las bases allí. A diferencia de la mayoría de los suplementos de colágeno, la mayoría de los suplementos de colágeno solo tienen el tipo uno, ¿verdad?'
+    #                      'Entonces este es el espectro completo.',
+    #                      ref_speaker, language='Spanish')
     #     print(output)
+    # '你好，我叫kate。我非常的fashion和international，我也会说一点日语，こんにちは。'
+    ref_speaker = os.path.join(resources, '88795527.mp3')
+    text = ('小兔子和小狐狸在大家眼中是一對奇怪的情侶，小兔子總是慢騰騰的，明天要交差的活，今天絕對不會幹完，'
+            '平時不管做什麽事都磨磨蹭蹭的，是大家公認的慢性子。而小狐狸可是個妥妥的急性子，做事雷厲風行，'
+            '卻常常是火急火燎的，總會因為太著急而出錯。就這樣兩個根本不在一條路上的人，居然在一起了。')
+    import zhconv
+    text = zhconv.convert(text, 'zh-cn')
+    with timer('tts-ml'):
+        output = tts.tts(text , ref_speaker, language='Chinese')
+        print(output)

@@ -36,7 +36,11 @@ def check_api():
 
 def startup_api():
     api_dir = 'E:\\ET_TTS'
-    process = subprocess.Popen([f'{api_dir}\\run_daemon.bat'], cwd=api_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
+    run_cmd = [
+        'cmd', '/c', f'{api_dir}\\run_daemon.bat'
+    ]
+    print(run_cmd)
+    process = subprocess.Popen(run_cmd, cwd=api_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
     process.wait()
 
 def start_script(config_id, run_mode=1, obs_video_port=0, obs_audio_port=0):
@@ -48,6 +52,7 @@ def start_script(config_id, run_mode=1, obs_video_port=0, obs_audio_port=0):
         '--obs_video_port', str(obs_video_port),
         '--obs_audio_port', str(obs_audio_port)
     ]
+    print(run_cmd)
     process = subprocess.Popen(run_cmd, cwd=scrip_dir, creationflags=subprocess.CREATE_NEW_CONSOLE)
     process.wait()
 

@@ -5,7 +5,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 from et_dirs import resources
 LANGUAGE = {
-    'en': 'English', 'sp': 'Spanish', 'zh': 'Chinese'
+    'en': 'English', 'es': 'Spanish', 'zh': 'Chinese'
 }
 from faster_whisper import WhisperModel
 from et_http_api import llm_async, tts_async
@@ -14,7 +14,8 @@ def asr(audio, lang) -> str:
     model = WhisperModel(model_size_or_path="large-v3", device="cuda", compute_type="float16")
     segments, info = model.transcribe(audio, language=lang, beam_size=5, vad_filter=True,
                                       vad_parameters=dict(min_silence_duration_ms=700), word_timestamps=True)
-    text_lang = "".join([segment.text for segment in segments])
+    text_lang = ", ".join([segment.text for segment in segments])
+    text_lang += '.'
     return text_lang
 
 def translate(text, from_lang, to_lang) -> str:
@@ -33,6 +34,13 @@ def translate(text, from_lang, to_lang) -> str:
     except:
         return llm_text
 
+def whisper_translate(audio, from_lang, to_lang):
+    import whisper
+    model = whisper.load_model('large-v3', device="cuda")
+    options = dict(language=from_lang, task='translate', beam_size=5, best_of=5)
+    results = model.transcribe(audio, **options)
+    return results['text']
+
 def tts(text, speaker, lang) -> str:
     audio_path = tts_async(text, speaker, f'{lang}', spc_type='ov_v2', language=LANGUAGE[lang])
     audio_path = asyncio.run(audio_path)
@@ -48,14 +56,17 @@ if __name__ == '__main__':
     # source = os.path.join(resources, 'example_reference.mp3')
     source = os.path.join(resources, '88795527.mp3')
     from_lang = 'zh'
-    to_lang = 'sp'
+    to_lang = 'es'
     with timer('asr'):
         text = asr(source, lang=from_lang)
     print('asr.text ==>', text)
-    with timer('translate'):
-        text = translate(text, from_lang=from_lang, to_lang=to_lang)
+    # with timer('translate'):
+    #     text = translate(text, from_lang=from_lang, to_lang=to_lang)
+    # print('translate.text ==>', text)
+    with timer('whisper'):
+        text = whisper_translate(source, from_lang, to_lang)
     print('translate.text ==>', text)
-    with timer('tts'):
-        target = tts(text, 'example_reference', to_lang)
-    print('tts.target ==>', target)
-    play(target)
+    # with timer('tts'):
+    #     target = tts(text, 'example_reference', to_lang)
+    # print('tts.target ==>', target)
+    # play(target)
