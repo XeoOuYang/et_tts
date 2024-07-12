@@ -113,7 +113,7 @@ async def tts_async(text, ref_name, out_name, spc_type='ov_v2', et_uuid=_ET_UUID
         return ""
 
 
-async def llm_tts_stream(query, llm_type, role_play, context, inst_text, max_num_sentence,
+async def llm_tts_stream(query, llm_type, role_play, context, inst_text, max_num_sentence, repetition_penalty,
                          ref_name, out_name, tts_type, et_uuid=_ET_UUID_, language="english"):
     url = f"{HOST}/llm/tts/stream"
     headers = {
@@ -131,6 +131,7 @@ async def llm_tts_stream(query, llm_type, role_play, context, inst_text, max_num
         "inst_text": inst_text,
         "spc_type": llm_type,
         "max_num_sentence": max_num_sentence,
+        "repetition_penalty": repetition_penalty
     }
     tts_param = {
         "et_uuid": et_uuid,
@@ -179,8 +180,8 @@ Trust me, these two are about to become your new best friends for a healthier, h
                  f'Hola mucho gusto.')
     inst_text = f'Please modify bellow text before translating from {from_lang_name} to {to_lang_name}.'
     llm_result = asyncio.run(llm_llama(
-        query=query, role_play=role_play, context='',
-        inst_text=inst_text, max_num_sentence=16, language=from_lang_name.lower()
+        query=query, role_play=role_play, context='', inst_text=inst_text, max_num_sentence=16,
+        language=to_lang_name.lower()
     ))
     print(llm_result)
     # try:
