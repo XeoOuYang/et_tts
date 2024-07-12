@@ -235,12 +235,15 @@ class LLM_Llama_V3(ET_LLM):
         min_new_tokens = max(min_new_tokens, qa_ids_tokens//2)
         infer_params['max_new_tokens'] = max_new_tokens
         infer_params['min_new_tokens'] = min_new_tokens
+        steam_callback = kwargs['stream_callback'] if 'stream_callback' in kwargs else None
+        # print(f'llama -> {steam_callback}')
         sentence_stopping_criteria = SentenceStoppingCriteria(max_num_sentence=max_num_sentence,
                                                               sentence_token_list=self.sentence_token_list,
                                                               dot_token=self.dot_token_id,
                                                               stop_token_id_list=self.stop_token_id_list,
                                                               stop_word=self.template.stop_word,
-                                                              tokenizer=self.tokenizer)
+                                                              tokenizer=self.tokenizer,
+                                                              stream_callback=steam_callback)
         stopping_criteria = StoppingCriteriaList()
         stopping_criteria.append(sentence_stopping_criteria)
         logits_processor = LogitsProcessorList()

@@ -75,7 +75,7 @@ class ForceTokenFixValueLogitsProcessor(LogitsProcessor):
 
 class SentenceStoppingCriteria(StoppingCriteria):
     def __init__(self, max_num_sentence: int, sentence_token_list: [int], dot_token: int,
-                 stop_token_id_list: [int], stop_word: str, tokenizer):
+                 stop_token_id_list: [int], stop_word: str, tokenizer, stream_callback=None):
         self._max_num_sentence = max_num_sentence
         self._sentence_token_list = sentence_token_list
         self._sentence_pattern = r'['+''.join(self._sentence_token_list)+']|\.'
@@ -91,6 +91,7 @@ class SentenceStoppingCriteria(StoppingCriteria):
         self._dot_token_id = self._model_tokenizer.encode(dot_token, add_special_tokens=False)[-1]
         # 停止理由
         self.reason_stop = 'max_new_token'
+        self.stream_callback = stream_callback
 
     def _count_sentence(self, text):
         matches = re.findall(self._sentence_pattern, text)
@@ -106,6 +107,8 @@ class SentenceStoppingCriteria(StoppingCriteria):
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs):
         current_token_id = self._current_token_id(input_ids)
         self.tokens_decoded_words.append(self._decode_token(current_token_id))
+        # print(f'SentenceStoppingCriteria -> {self.stream_callback}')
+        if self.stream_callback is not None: self.stream_callback(self.tokens_decoded_words[-1])
         # 开始判断逻辑
         if current_token_id in self._sentence_token_id_list:  # 当前是!.?其中一个
             if current_token_id == self._dot_token_id:  # 处理小数点
@@ -120,7 +123,7 @@ class SentenceStoppingCriteria(StoppingCriteria):
         else:
             count_sentence = self._count_sentence(self.tokens_decoded_words[-1])
             if count_sentence > 0:
-                self._count_num_sentence += count_sentence
+                self._count_num_sentence += 1
                 # 判断句子数量
                 if self._count_num_sentence >= self._max_num_sentence:
                     self.reason_stop = f'max_sentence_2({self._count_num_sentence})'

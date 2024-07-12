@@ -1,5 +1,4 @@
 import asyncio
-from json import JSONDecodeError
 
 import requests
 import uuid
@@ -11,7 +10,7 @@ HOST = 'http://127.0.0.1:9394'
 _ET_UUID_ = uuid.uuid1().hex
 
 
-async def post_retry(url, headers, data):
+async def post_retry(url, headers, data, stream=None):
     retry_times = 3  # 设置重试次数
     retry_backoff_factor = 2.0  # 设置重试间隔时间
     status_force_list = [400, 401, 403, 404, 500, 502, 503, 504]
@@ -20,7 +19,7 @@ async def post_retry(url, headers, data):
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
-    return session.post(url, headers=headers, json=data)
+    return session.post(url, headers=headers, json=data, stream=stream), session
 
 
 async def ver_async():
@@ -37,6 +36,7 @@ async def llm_glm(query, role_play, context, inst_text, max_num_sentence, repeti
                   spc_type='llm_glm', et_uuid=_ET_UUID_, language="english"):
     return await llm_async(query, role_play, context, inst_text, max_num_sentence,
                            repetition_penalty, spc_type, et_uuid, language)
+
 
 async def llm_llama(query, role_play, context, inst_text, max_num_sentence, repetition_penalty=1.05,
                     spc_type='llm_llama',et_uuid=_ET_UUID_, language="english"):
@@ -63,7 +63,7 @@ async def llm_async(query, role_play, context, inst_text, max_num_sentence, repe
         "max_num_sentence": max_num_sentence,
         "repetition_penalty": repetition_penalty
     }
-    response = await post_retry(url, headers, data)
+    response, _ = await post_retry(url, headers, data)
     if response.status_code == 200:
         resp_json = json.loads(response.text)
         return resp_json['text']
@@ -105,7 +105,7 @@ async def tts_async(text, ref_name, out_name, spc_type='ov_v2', et_uuid=_ET_UUID
         data['infer_prompt'] = "[speed_6]"
         data['skip_refine_text'] = False
     # http请求
-    response = await post_retry(url, headers, data)
+    response, _ = await post_retry(url, headers, data)
     if response.status_code == 200:
         resp_json = json.loads(response.text)
         return resp_json['path']
@@ -113,12 +113,13 @@ async def tts_async(text, ref_name, out_name, spc_type='ov_v2', et_uuid=_ET_UUID
         return ""
 
 
-async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_num_sentence,
-                            ref_name, out_name, tts_type, et_uuid=_ET_UUID_, language="english"):
-    url = f"{HOST}/llm/tts/tr"
+async def llm_tts_stream(query, llm_type, role_play, context, inst_text, max_num_sentence,
+                         ref_name, out_name, tts_type, et_uuid=_ET_UUID_, language="english"):
+    url = f"{HOST}/llm/tts/stream"
     headers = {
         "accept": "application/json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Connection": "keep-alive"
     }
     llm_param = {
         "et_uuid": et_uuid,
@@ -132,27 +133,35 @@ async def sop_llm_tts_async(query, llm_type, role_play, context, inst_text, max_
         "max_num_sentence": max_num_sentence,
     }
     tts_param = {
-            "et_uuid": et_uuid,
-            "language": language,
-            "spc_type": tts_type,
-            "out_name": out_name,
-            "ref_name": ref_name,
-        }
+        "et_uuid": et_uuid,
+        "language": language,
+        "spc_type": tts_type,
+        "out_name": out_name,
+        "ref_name": ref_name,
+    }
     if tts_type == 'chat_tts':
-        tts_param['manual_seed'] = int(ref_name) # 1~22是预设音色
+        tts_param['manual_seed'] = int(ref_name)  # 1~22是预设音色
         tts_param['refine_prompt'] = "[oral_7][laugh_1][break_2]"
         tts_param['infer_prompt'] = "[speed_6]"
         tts_param['skip_refine_text'] = False
-    data = {
+    # 请求
+    request_data = {
         "llm_param": llm_param,
         "tts_param": tts_param
     }
-    response = await post_retry(url, headers, data)
-    if response.status_code == 200:
-        resp_json = json.loads(response.text)
-        return resp_json['text'], resp_json['path']
-    else:
-        return "", ""
+    import time
+    start = time.perf_counter()
+    response, session = await post_retry(url, headers, request_data, stream=True)
+    if response.status_code != 200: return ""
+    for message in response.iter_content(chunk_size=1024, decode_unicode=True):
+        print('=='*44)
+        print(time.perf_counter()-start)
+        print(message)
+        print('=='*44)
+    print(time.perf_counter()-start)
+    # 关闭sse
+    session.close()
+
 
 if __name__ == '__main__':
     # 测试一、llm调整&翻译
@@ -163,19 +172,24 @@ Trust me, these two are about to become your new best friends for a healthier, h
     """.replace("\n", " ").strip()
     from_lang_name = 'English'
     to_lang_name = 'Spanish'
-    output_format = 'Output the translated result in JSON format {"output": the translated result} at the end.'
-    role_play = f'You are an expert of language, good at translating from {from_lang_name} to {to_lang_name}.'
-    inst_text = f'Please modify bellow text first, then translate them from {from_lang_name} to {to_lang_name}. {output_format}.'
+    role_play = (f'You are good at translating from {from_lang_name} to {to_lang_name}, you only outputs the final result.\n'
+                 f'Example Input:\n'
+                 f'Please modify bellow text before translating from {from_lang_name} to {to_lang_name}.\n'
+                 f'Hello, nice to meet you.\n'
+                 f'Example Output:\n'
+                 f'Hola mucho gusto.')
+    inst_text = f'Please modify bellow text before translating from {from_lang_name} to {to_lang_name}.'
     llm_result = asyncio.run(llm_llama(
         query=query, role_play=role_play, context='',
         inst_text=inst_text, max_num_sentence=16, language=from_lang_name.lower()
     ))
     print(llm_result)
-    try:
-        tr_text = json.loads(llm_result)['output']
-    except JSONDecodeError:
-        tr_text = None
-    assert tr_text is not None
+    # try:
+    #     tr_text = json.loads(llm_result)['output']
+    # except JSONDecodeError:
+    #     tr_text = None
+    # assert tr_text is not None
+    tr_text = llm_result
     # 测试二、coqui-tts转换
     tts_path = asyncio.run(tts_coqui(
         tr_text, ref_name='ref_spanish_59s', out_name='welcome_man_0_es', language="Spanish"
@@ -183,5 +197,5 @@ Trust me, these two are about to become your new best friends for a healthier, h
     print(tts_path)
     assert tts_path is not None and tts_path != ''
     # 测试三、播放tts
-    from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_INDEX
-    play_audio_async(tts_path, SOUND_DEVICE_INDEX[1])
+    # from sounddevice_wrapper import play_audio_async, SOUND_DEVICE_INDEX
+    # play_audio_async(tts_path, SOUND_DEVICE_INDEX[1])
