@@ -172,7 +172,8 @@ Trust me, these two are about to become your new best friends for a healthier, h
     """.replace("\n", " ").strip()
     from_lang_name = 'English'
     to_lang_name = 'Spanish'
-    role_play = (f'You are good at translating from {from_lang_name} to {to_lang_name}, you only outputs the final result.\n'
+    output_format = 'Please only output the final result, do not include any extra information.'
+    role_play = (f'You are good at translating from {from_lang_name} to {to_lang_name}. {output_format}\n'
                  f'Example Input:\n'
                  f'Please modify bellow text before translating from {from_lang_name} to {to_lang_name}.\n'
                  f'Hello, nice to meet you.\n'

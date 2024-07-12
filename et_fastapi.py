@@ -88,20 +88,31 @@ async def version_async():
     return JSONResponse({"llm": LLM_VERSION, "tts": TTS_VERSION}, status_code=200)
 
 
+DESIRED_LEN = 36
 def start_llm_inference(llm_param, queue):
     tmp_list: list = []
     def stream_callback(txt: str):
         if txt != '':
             # 判断是否句子
-            idx_comma = max([txt.find(cht) for cht in ['.', '!', '?']])
-            if idx_comma >= 0:
-                tmp_list.append(txt[:idx_comma + 1])
-                sent = ''.join(tmp_list)
+            idx_arr = [txt.find(cht) for cht in ['.', '!', '?', ',', ':']]
+            idx_period = max(idx_arr[:3])
+            idx_comma = max(idx_arr[3:])
+            if idx_period >= 0:
+                tmp_list.append(txt[:idx_period + 1])
+                sent = ''.join(tmp_list).strip()
                 queue.put_nowait(sent)
-                txt = txt[idx_comma + 1:]
+                txt = txt[idx_period + 1:]
                 tmp_list.clear()
+            elif idx_comma >= 0:
+                t_len = sum([len(t) for t in tmp_list])
+                if t_len >= DESIRED_LEN:
+                    tmp_list.append(txt[:idx_comma + 1])
+                    sent = ''.join(tmp_list).strip()
+                    queue.put_nowait(sent)
+                    txt = txt[idx_comma + 1:]
+                    tmp_list.clear()
             # 继续组装txt
-            tmp_list.append(txt)
+            if txt != '': tmp_list.append(txt)
 
     # 开始推理
     role_play = llm_param.pop('role_play') if 'role_play' in llm_param else ''
