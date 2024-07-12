@@ -23,4 +23,3 @@ Trust me, these two are about to become your new best friends for a healthier, h
         inst_text=inst_text, max_num_sentence=16, ref_name='ref_spanish_59s', out_name='man_0_es', tts_type='coqui_tts',
         language="Spanish"
     ))
-    print(llm_tts_result)

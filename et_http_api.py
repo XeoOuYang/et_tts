@@ -153,14 +153,13 @@ async def llm_tts_stream(query, llm_type, role_play, context, inst_text, max_num
     start = time.perf_counter()
     response, session = await post_retry(url, headers, request_data, stream=True)
     if response.status_code != 200: return ""
-    for message in response.iter_content(chunk_size=1024, decode_unicode=True):
-        print('=='*44)
-        print(time.perf_counter()-start)
-        print(message)
-        print('=='*44)
-    print(time.perf_counter()-start)
+    for line in response.iter_lines(chunk_size=1024, decode_unicode=True, delimiter='\n'):
+        if line.startswith('data:'):
+            print(time.perf_counter()-start)
+            print(line)
     # 关闭sse
     session.close()
+    print(time.perf_counter()-start)
 
 
 if __name__ == '__main__':
