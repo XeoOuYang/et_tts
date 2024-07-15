@@ -89,14 +89,19 @@ async def version_async():
 
 
 DESIRED_LEN = 36
+ENDING_SIGN = ['.', '!', '?']
+LEN_OF_ENDING = len(ENDING_SIGN)
+BREAKING_SIGN = [',', ':', '\n']
+LEN_OF_BREAKING = len(BREAKING_SIGN)
+FULL_SIGN = ENDING_SIGN + BREAKING_SIGN
 def start_llm_inference(llm_param, queue):
     tmp_list: list = []
     def stream_callback(txt: str):
         if txt != '':
             # 判断是否句子
-            idx_arr = [txt.find(cht) for cht in ['.', '!', '?', ',', ':']]
-            idx_period = max(idx_arr[:3])
-            idx_comma = max(idx_arr[3:])
+            idx_arr = [txt.find(cht) for cht in FULL_SIGN]
+            idx_period = max(idx_arr[:LEN_OF_ENDING])
+            idx_comma = max(idx_arr[LEN_OF_ENDING:])
             if idx_period >= 0:
                 tmp_list.append(txt[:idx_period + 1])
                 sent = ''.join(tmp_list).strip()
@@ -154,7 +159,7 @@ async def llm_tts_stream(kwargs: dict, request: Request):
     spc_language = tts_dict['language'] if 'language' in tts_dict else 'english'
     ref_name = tts_dict['ref_name'] if 'ref_name' in tts_dict else ''
     async def text_to_speech(text) -> str:
-        out_name = str(hash(text))
+        out_name = str(abs(hash(text)))
         out_path = os.path.join(outputs_v2, f'{yyyymmdd}{os.path.sep}{out_name}.wav')
         if 'ref_name' not in tts_dict: tts_dict['ref_name'] = ref_name
         # ref_audio = os.path.join(resources, f'{ref_name}.wav')
@@ -166,11 +171,17 @@ async def llm_tts_stream(kwargs: dict, request: Request):
     async def event_stream() -> AsyncGenerator[str, None]:
         async for text in generate_text():
             audio = await text_to_speech(text)
-            yield {"text": text, "audio": audio}
+            yield {"type": "MESSAGE", "text": text, "audio": audio}
 
     async def event_generator():
-        # 开始接收
         event_id = 0
+        # 发送开始符号
+        yield ServerSentEvent(
+            id=event_id,
+            event='llm_tts_stream_event',
+            data={"type": "START"}
+        )
+        # 开始接收
         async for event in event_stream():
             print(f"event -> {event}")
             # 如果链接断开，就终止发送
@@ -185,6 +196,12 @@ async def llm_tts_stream(kwargs: dict, request: Request):
             event_id += 1
             # 休眠，否则接收不到disconnected事件
             await asyncio.sleep(0.5)
+        # 发送结束符号
+        yield ServerSentEvent(
+            id=event_id,
+            event='llm_tts_stream_event',
+            data={"type": "END"}
+        )
 
     # 启动llm推理
     def run_llm_infer():

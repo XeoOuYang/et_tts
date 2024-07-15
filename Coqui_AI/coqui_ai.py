@@ -31,6 +31,8 @@ class CoquiTTS(ET_TTS):
         self.config = config
         self.model = model
         self.language = SES_DICT[language]
+        # 缓存ref_speaker
+        self.speakers = {}
 
     def tts(self, text: str, ref_speaker: str, **kwargs):
         language = self.language
@@ -62,7 +64,12 @@ class CoquiTTS(ET_TTS):
         # 提取参考声纹
         from et_base import timer
         with timer('coqui_emb'):
-            gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(audio_path=[ref_speaker])
+            ITEM_KEY = str(abs(hash(ref_speaker)))
+            if ITEM_KEY not in self.speakers:
+                gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(audio_path=[ref_speaker])
+                self.speakers[ITEM_KEY] = (gpt_cond_latent, speaker_embedding)
+            else:
+                gpt_cond_latent, speaker_embedding = self.speakers[ITEM_KEY]
         # 开始推理
         # https://docs.coqui.ai/en/dev/models/xtts.html
         outputs = self.model.inference(
