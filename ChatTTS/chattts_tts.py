@@ -263,7 +263,6 @@ def run_random_seed(text, start=0, end=10000, bias=0, ref_audio=''):
     with open(seed_set_file, 'w', encoding='utf8', errors='ignore') as fd:
         fd.write(json.dumps(seed_dict))
 
-
 def mfcc(audio_path, sr=16000):
     audio, _sr = librosa.load(audio_path)
     if _sr != sr: audio = librosa.resample(y=audio, orig_sr=_sr, target_sr=sr)
