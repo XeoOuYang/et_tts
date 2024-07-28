@@ -13,6 +13,8 @@ SES_DICT = {
     "French": "fr",
     "Spanish": "es",
     "Chinese": "zh-cn",
+    "Japanese": "ja",
+    "Korean": "ko",
 }
 
 class CoquiTTS(ET_TTS):
@@ -100,12 +102,14 @@ if __name__ == '__main__':
     #                      ref_speaker, language='Spanish')
     #     print(output)
     # '你好，我叫kate。我非常的fashion和international，我也会说一点日语，こんにちは。'
-    ref_speaker = os.path.join(resources, '88795527.mp3')
-    text = ('小兔子和小狐狸在大家眼中是一對奇怪的情侶，小兔子總是慢騰騰的，明天要交差的活，今天絕對不會幹完，'
-            '平時不管做什麽事都磨磨蹭蹭的，是大家公認的慢性子。而小狐狸可是個妥妥的急性子，做事雷厲風行，'
-            '卻常常是火急火燎的，總會因為太著急而出錯。就這樣兩個根本不在一條路上的人，居然在一起了。')
-    import zhconv
-    text = zhconv.convert(text, 'zh-cn')
+    # ref_speaker = os.path.join(resources, '88795527.mp3')
+    ref_speaker = "C:\\Users\\1\\Downloads\\tts\\ttt.wav"
+    # text = ('小兔子和小狐狸在大家眼中是一對奇怪的情侶，小兔子總是慢騰騰的，明天要交差的活，今天絕對不會幹完，'
+    #         '平時不管做什麽事都磨磨蹭蹭的，是大家公認的慢性子。而小狐狸可是個妥妥的急性子，做事雷厲風行，'
+    #         '卻常常是火急火燎的，總會因為太著急而出錯。就這樣兩個根本不在一條路上的人，居然在一起了。')
+    # import zhconv
+    # text = zhconv.convert(text, 'zh-cn')
+    text = "안녕하세요! 오늘은 충전이 필요 없는 스마트 쓰레기통 UOCAN을 소개해드리겠습니다. 레드닷 디자인 어워드를 수상한 이 쓰레기통은 예술 작품처럼 세련된 디자인을 자랑합니다. UOCAN은 쓰레기 봉투를 자동으로 늘리고, 묶고, 자를 수 있어 봉투 사용량을 최대 70% 절약할 수 있습니다. 저희의 쓰레기 봉투는 매우 튼튼하고 찢어지지 않으며, 환경 친화적입니다. UOCAN, 더 스마트하고 우아한 쓰레기 처리를 경험하세요."
     with timer('tts-ml'):
-        output = tts.tts(text , ref_speaker, language='Chinese')
+        output = tts.tts(text , ref_speaker, language='Korean')
         print(output)

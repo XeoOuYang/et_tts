@@ -123,7 +123,7 @@ def build_prompt(tokenizer, template, query, history, system=None):
 
 
 class LLM_Llama_V3(ET_LLM):
-    def __init__(self, model_name: str = 'LLM-Research/Meta-Llama-3-8B-Instruct', temp_name: str = 'llama3'):
+    def __init__(self, model_name: str = 'LLM-Research/Meta-Llama-3.1-8B-Instruct', temp_name: str = 'llama3'):
         super().__init__()
         self.template_name = temp_name
         assert self.template_name in template_dict

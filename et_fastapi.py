@@ -384,7 +384,7 @@ if __name__ == '__main__':
         enable_reload = (sys.argv[1] != 'False')
     print(f'enable_reload={enable_reload}')
     try:
-        uvicorn.run(app='et_fastapi:app', host='0.0.0.0', port=9394, workers=1,
+        uvicorn.run(app='et_fastapi:app', host='127.0.0.1', port=9394, workers=1,
                     reload=enable_reload, reload_includes=['et_fastapi.py'])
     except Exception as e:
         print(e)
